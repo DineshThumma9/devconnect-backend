@@ -1,0 +1,13 @@
+
+
+### Create a new user
+POST http://localhost:9090/users/create-user
+Content-Type: application/json
+Authorization: Basic user:5eee6441-d85f-47a1-97ad-f2b838742cdc
+
+{
+  "username": "dinesh",
+  "name": "duct_0990",
+  "email": "dinesh@example.com",
+  "password": "supersecret"
+}

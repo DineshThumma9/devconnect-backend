@@ -39,15 +39,14 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<LoginResponseDTO> register(
             @RequestBody UserRequestDTO userRequestDTO
+
     ) {
 
 
         UserResponseDTO user = null;
-        try {
+
             user = userService.createUser(userRequestDTO);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+
         if (user != null) {
             String token = authService.login(new LoginRequestDTO(userRequestDTO.getEmail(), userRequestDTO.getPassword()))
                     .orElse(null);

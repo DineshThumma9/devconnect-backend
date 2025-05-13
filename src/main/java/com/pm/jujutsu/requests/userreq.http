@@ -1,13 +1,14 @@
 
-
-### Create a new user
+### Create User - Requires Bearer Token
 POST http://localhost:9090/users/create-user
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdHJpbmcyMTIxQGhtYWlsLmNvbSIsImlhdCI6MTc0Njk1OTcyNSwiZXhwIjoxNzQ2OTk1NzI1fQ.Om1zXAdI3rxsRR2gxceVH9i1B0Eqm-QWYS_RB3TtUv
 Content-Type: application/json
-Authorization: Basic user:5eee6441-d85f-47a1-97ad-f2b838742cdc
+Accept: */*
 
 {
-  "username": "dinesh",
-  "name": "duct_0990",
-  "email": "dinesh@example.com",
-  "password": "supersecret"
+  "name": "string121121121212122121",
+  "password": "string",
+  "email": "string21213@21212121212121gmail.com",
+  "username": "stri12121112121212211ng",
+  "profile_pic": "string"
 }

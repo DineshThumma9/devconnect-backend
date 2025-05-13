@@ -29,6 +29,7 @@ public class User {
     private String email;
 
     @NotNull
+    @Indexed(unique = true)
     private String username;
 
     @NotNull

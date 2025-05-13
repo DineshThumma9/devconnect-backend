@@ -24,7 +24,7 @@ public class AuthService {
 
     public Optional<String> login(LoginRequestDTO loginRequestDTO) {
         return userRepository.findByEmail(loginRequestDTO.getEmail())
-                .filter(user -> encoder.decode(user))
+                .filter(user -> encoder.matches(loginRequestDTO.getPassword(), user.getHashedPassword()))
                 .map(user -> jwtUtil.generateToken(user.getEmail()));
     }
 

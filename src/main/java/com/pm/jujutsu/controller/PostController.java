@@ -17,7 +17,7 @@ public class PostController {
     public PostService postService;
 
 
-    @GetMapping("/get-post/{postId}/{ownerid}")
+    @GetMapping("/get-post/{postId}/")
     public ResponseEntity<PostResponseDTO> getPost(
             @PathVariable String postId
     ){
@@ -32,22 +32,24 @@ public class PostController {
     }
 
 
-    @PostMapping("/create/{ownerId}")
-    public ResponseEntity<PostResponseDTO> createPost( @PathVariable String ownerId,@RequestBody PostRequestDTO postRequestDTO){
+    @PostMapping("/create/")
+    public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO postRequestDTO){
 
-        PostResponseDTO postResponseDTO = postService.createPost(ownerId,postRequestDTO);
+        PostResponseDTO postResponseDTO = null;
+            postResponseDTO = postService.createPost(postRequestDTO);
+
         return ResponseEntity.ok(postResponseDTO);
 
     }
 
 
-    @PutMapping("/update/{postId}/{ownerId}")
+    @PutMapping("/update/{postId}/")
     public ResponseEntity<PostResponseDTO> updatePost(
             @PathVariable("postId") String postId,
             @RequestBody  PostRequestDTO postRequestDTO
 
     ){
-        PostResponseDTO postResponseDTO = postService.updatePost(postRequestDTO,postId,ownerId);
+        PostResponseDTO postResponseDTO = postService.updatePost(postRequestDTO,postId);
         return  ResponseEntity.ok(postResponseDTO);
 
 

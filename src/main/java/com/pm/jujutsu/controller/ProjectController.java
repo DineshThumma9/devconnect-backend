@@ -14,16 +14,16 @@ public class ProjectController {
     @Autowired
     private ProjectService projectService;
 
-    @GetMapping("/get-project/{ownerId}/{projectId}")
-    public ResponseEntity<ProjectResponseDTO> getProject(@PathVariable String ownerId,@PathVariable String projectId) {
-        ProjectResponseDTO projectResponseDTO = projectService.getProject(ownerId,projectId);
+    @GetMapping("/get-project/{projectId}")
+    public ResponseEntity<ProjectResponseDTO> getProject(@PathVariable String projectId) {
+        ProjectResponseDTO projectResponseDTO = projectService.getProject(projectId);
         return ResponseEntity.ok(projectResponseDTO);
     }
 
-    @PostMapping("/create/{ownerId}")
-    public ResponseEntity<ProjectResponseDTO> createProject(@RequestParam("ownerId") String ownerId,
+    @PostMapping("/create/")
+    public ResponseEntity<ProjectResponseDTO> createProject(
                                                       @RequestBody ProjectRequestDTO projectRequestDTO) {
-        ProjectResponseDTO projectResponseDTO = projectService.createProject(ownerId,projectRequestDTO);
+        ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO);
         return ResponseEntity.ok(projectResponseDTO);
     }
 

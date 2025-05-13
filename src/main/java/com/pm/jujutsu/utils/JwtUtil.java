@@ -6,14 +6,17 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.function.Function;
@@ -21,15 +24,16 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private  UserRepository userRepository;
+
+
     @Value("${JWT_SECRET_BASE64_KEY}")
     private String secret;
 
     private Key secretKey;
 
-    public JwtUtil(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+
 
     @PostConstruct
     public void init() {
@@ -37,46 +41,72 @@ public class JwtUtil {
         secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(UserDetails user){
-        return createToken(user.getUsername());
-    }
-
-    private String createToken(String subject){
+    public String generateToken(String email) {
         return Jwts.builder()
-                .setSubject(subject)
+                .setSubject(email)
                 .setIssuedAt(Date.from(Instant.now()))
                 .setExpiration(Date.from(Instant.now().plusSeconds(10 * 60 * 60)))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String extractUsername(String subject){
-        return  extractClaims(createToken() , Claims::getSubject);
+    public String extractUsername(String token) {
+        return extractClaims(token, Claims::getSubject);
     }
 
-    private <T> T extractClaims(String token , Function<Claims,T> claimsResolver){
+    private <T> T extractClaims(String token, Function<Claims, T> claimsResolver) {
         Claims claims = parseToken(token);
         return claimsResolver.apply(claims);
     }
 
-    private Claims parseToken(String token){
+    private Claims parseToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody();
     }
 
-    public boolean validateToken(String token , User user){
-        final String username = extractUsername(token);
-        return username.equals(user.getUsername()) && !isTokenExpired(token);
+    public void validateToken(String token) {
+        Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token);
     }
 
-    private boolean isTokenExpired(String token){
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    }
+
+    private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    private Date extractExpiration(String token){
-        return extractClaims(token,Claims::getExpiration);
+    private Date extractExpiration(String token) {
+        return extractClaims(token, Claims::getExpiration);
+    }
+
+
+    public String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;  // or throw exception
+        }
+        return authentication.getName();  // this is the username
+    }
+
+    /**
+     * Gets the current user from the security context
+     * @return The current authenticated user
+     * @throws RuntimeException if no authenticated user is found
+     */
+    public User getCurrentUser() {
+        String username = getCurrentUsername();
+        if (username == null) {
+            throw new RuntimeException("No authenticated user found.");
+        }
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }

@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: jujutsu
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 48755-dmheoup4s98e.apps.googleusercontent.com
+            client-secret: GOCDDPdnk
+            scope:
+              - profile
+              - email
+            redirect-uri: http://localhost:8080/login/oauth2/code/google
+
+          github:
+            client-id: O84Hq
+            client-secret: 18da367461c4
+            scope:
+              - read:user
+              - user:email
+            redirect-uri: http://localhost:8080/login/oauth2/code/github
+
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+
+  data:
+    mongodb:
+      uri: mongodb+srv://dineshthumma15:vhaoHH0O8rD7EBZy@duct.lsgqe.mongodb.net/jujutsudb?retryWrites=true&w=majority&appName=duct
+      auto-index-creation: true
+      database: jujutsudb

@@ -14,7 +14,9 @@ import com.pm.jujutsu.utils.JwtUtil;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,9 @@ public class UserService {
 
     @Autowired
     private JwtUtil jwtUtils;
+
+    @Autowired
+    private AzureBlobService azureBlobService;
 
     public List<UserResponseDTO> getAllUser() {
         List<User> users = userRepository.findAll();
@@ -55,21 +60,63 @@ public class UserService {
     }
 
     public UserResponseDTO updateUser(UserRequestDTO user) {
-
         User updatedUser = userRepository.getUserByEmail(user.getEmail()).orElseThrow(
                 () -> new NotFoundException("User doesnt exist")
         );
-
-        updatedUser.setUsername(user.getUsername());
-        updatedUser.setName(user.getName());
-        updatedUser.setProfilePicUrl(user.getProfile_pic());
 
         if (!updatedUser.getId().equals(jwtUtils.getCurrentUser().getId())) {
             throw new UnauthorizedException("User not authorized");
         }
 
+        updatedUser.setUsername(user.getUsername());
+        updatedUser.setName(user.getName());
+        
+        // Only update profile pic URL if it's provided and different from current
+        if (user.getProfile_pic() != null && !user.getProfile_pic().equals(updatedUser.getProfilePicUrl())) {
+            // If there's an existing profile pic and it's from our blob storage, delete it
+
+            deleteOldProfilePicture(updatedUser.getProfilePicUrl());
+
+            updatedUser.setProfilePicUrl(user.getProfile_pic());
+        }
+
         User newUser = userRepository.save(updatedUser);
         return userMappers.toResponseEntity(newUser);
+    }
+
+    public UserResponseDTO updateProfilePicture(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new BadRequestException("File cannot be empty");
+        }
+        
+        // Get current user
+        User currentUser = userRepository.findById(jwtUtils.getCurrentUser().getId())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        
+        // Delete old profile picture if exists
+        deleteOldProfilePicture(currentUser.getProfilePicUrl());
+        
+        // Upload new profile picture to Azure Blob Storage
+        String profilePicUrl = azureBlobService.uploadFile(file);
+        
+        // Update user with new profile picture URL
+        currentUser.setProfilePicUrl(profilePicUrl);
+        User updatedUser = userRepository.save(currentUser);
+        
+        return userMappers.toResponseEntity(updatedUser);
+    }
+
+    private void deleteOldProfilePicture(String profilePicUrl) {
+        if (profilePicUrl != null && profilePicUrl.contains(azureBlobService.getBlobContainerUrl())) {
+            try {
+                // Extract filename from the URL
+                String fileName = profilePicUrl.substring(profilePicUrl.lastIndexOf("/") + 1);
+                azureBlobService.deleteFile(fileName);
+            } catch (Exception e) {
+                // Log error but don't halt execution
+                System.err.println("Failed to delete old profile picture: " + e.getMessage());
+            }
+        }
     }
 
     public UserResponseDTO getUser(String id) {
@@ -90,6 +137,9 @@ public class UserService {
 
         User userToDelete = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+        
+        // Delete user's profile picture from blob storage
+        deleteOldProfilePicture(userToDelete.getProfilePicUrl());
 
         userRepository.delete(userToDelete);
     }

@@ -41,6 +41,9 @@ public class ProjectRequestDTO {
     private String githubLink;  // optional
 
 
+    private String[] media;
+
+
     public @NotNull String getTitle() {
         return title;
     }

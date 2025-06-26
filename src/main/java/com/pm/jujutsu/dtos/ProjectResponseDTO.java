@@ -25,7 +25,16 @@ public class ProjectResponseDTO {
     private List<String> pastContributors;
     private String githubLink;
     private Date createdAt;
+    private String[] media;
 
+
+    public String[] getMedia() {
+        return media;
+    }
+
+    public void setMedia(String[] media) {
+        this.media = media;
+    }
 
     public String getOwnerId() {
         return ownerId;

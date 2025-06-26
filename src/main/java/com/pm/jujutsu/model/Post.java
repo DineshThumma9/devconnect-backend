@@ -32,6 +32,16 @@ public class Post {
     @LastModifiedDate
     private Date updatedAt;
 
+    private String[] media;
+
+    public String[] getMedia() {
+        return media;
+    }
+
+    public void setMedia(String[] media) {
+        this.media = media;
+    }
+
     private int likes = 0;
     private int comments = 0;
     private int shares = 0;

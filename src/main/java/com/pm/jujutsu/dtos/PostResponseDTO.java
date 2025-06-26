@@ -23,6 +23,7 @@ public class PostResponseDTO {
     private int likes;
     private int comments;
     private int shares;
+    private String[] media;
 
     public String getId() {
         return id;

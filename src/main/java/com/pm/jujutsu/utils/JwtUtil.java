@@ -1,10 +1,16 @@
+
 package com.pm.jujutsu.utils;
 
+import com.pm.jujutsu.exceptions.BadRequestException;
+import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.model.User;
 import com.pm.jujutsu.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,21 +31,27 @@ import java.util.function.Function;
 public class JwtUtil {
 
     @Autowired
-    private  UserRepository userRepository;
-
+    private UserRepository userRepository;
 
     @Value("${JWT_SECRET_BASE64_KEY}")
     private String secret;
 
     private Key secretKey;
 
-
-
     @PostConstruct
     public void init() {
-        byte[] keyBytes = Base64.getDecoder().decode(secret.getBytes(StandardCharsets.UTF_8));
-        secretKey = Keys.hmacShaKeyFor(keyBytes);
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT secret not set");
+        }
+
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(secret);
+            secretKey = Keys.hmacShaKeyFor(keyBytes);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid base64 JWT secret", e);
+        }
     }
+
 
     public String generateToken(String email) {
         return Jwts.builder()
@@ -49,6 +61,16 @@ public class JwtUtil {
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    public String generateRefreshToken(String email) {
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(Date.from(Instant.now()))
+                .setExpiration(Date.from(Instant.now().plusSeconds(30L * 24 * 60 * 60))) // 30 days
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
 
     public String extractUsername(String token) {
         return extractClaims(token, Claims::getSubject);
@@ -60,18 +82,28 @@ public class JwtUtil {
     }
 
     private Claims parseToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException | MalformedJwtException | SignatureException e) {
+            throw new UnauthorizedException("Invalid JWT token: " + e.getMessage());
+        }
     }
 
     public void validateToken(String token) {
-        Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token);
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token);
+        } catch (ExpiredJwtException e) {
+            throw new UnauthorizedException("JWT token has expired");
+        } catch (Exception e) {
+            throw new UnauthorizedException("Invalid JWT token");
+        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -87,26 +119,23 @@ public class JwtUtil {
         return extractClaims(token, Claims::getExpiration);
     }
 
-
     public String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            return null;  // or throw exception
+            throw new UnauthorizedException("No authenticated user found");
         }
-        return authentication.getName();  // this is the username
+        return authentication.getName();  // This returns email from JWT token
     }
 
     /**
      * Gets the current user from the security context
+     *
      * @return The current authenticated user
-     * @throws RuntimeException if no authenticated user is found
+     * @throws UnauthorizedException if no authenticated user is found
      */
     public User getCurrentUser() {
-        String username = getCurrentUsername();
-        if (username == null) {
-            throw new RuntimeException("No authenticated user found.");
-        }
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        String email = getCurrentUsername();
+        return userRepository.findByEmail(email)  // Find by email instead of username
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     }
 }

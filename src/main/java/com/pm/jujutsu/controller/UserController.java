@@ -3,11 +3,14 @@ package com.pm.jujutsu.controller;
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
 import com.pm.jujutsu.mappers.UserMappers;
+import com.pm.jujutsu.service.AzureBlobService;
 import com.pm.jujutsu.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/users")
@@ -19,8 +22,11 @@ public class UserController {
     @Autowired
     public UserMappers userMappers;
 
+    @Autowired
+    public AzureBlobService azureBlobService;
+
     @GetMapping("/get-user/{id}")
-    public ResponseEntity<UserResponseDTO> getUser(@RequestParam String id) {
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable String id) {
         return ResponseEntity.ok().body(userService.getUser(id));
     }
 
@@ -35,8 +41,15 @@ public class UserController {
         return ResponseEntity.ok().body(userService.updateUser(user));
     }
 
-    @DeleteMapping("/delete/")
-    public ResponseEntity<Void> deleteUser(@Param("id") String id) {
+    @PostMapping("/upload-profile-picture")
+    public ResponseEntity<String> uploadProfilePicture(@RequestParam("file") MultipartFile file) throws IOException {
+        String profileUrl = azureBlobService.uploadFile(file);
+        UserResponseDTO updatedUser = userService.updateProfilePicture(file);
+        return ResponseEntity.ok(profileUrl);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.ok().build();
     }

@@ -38,6 +38,7 @@ public class User {
     @NotNull
     private String profilePicUrl;
 
+
     public ObjectId getId() {
         return id;
     }

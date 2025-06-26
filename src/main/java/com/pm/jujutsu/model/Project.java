@@ -36,6 +36,15 @@ public class Project {
     private String status;  // e.g., "active", "completed"
     private String githubLink;
 
+    private  String[] media;
+
+    public String[] getMedia() {
+        return media;
+    }
+
+    public void setMedia(String[] media) {
+        this.media = media;
+    }
 
     @CreatedDate
     private LocalDateTime createdAt;

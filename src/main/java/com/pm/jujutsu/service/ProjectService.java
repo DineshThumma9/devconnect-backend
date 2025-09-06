@@ -12,6 +12,7 @@ import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -88,6 +89,9 @@ public class ProjectService {
         return true;
     }
 
+
+
+
     // Helper method to reduce code duplication
     private ProjectResponseDTO enrichProjectResponse(Project project) {
         ProjectResponseDTO responseDTO = projectMapper.toResponseEntity(project);
@@ -123,4 +127,102 @@ public class ProjectService {
 
         return responseDTO;
     }
+
+
+
+    public boolean subscribeToProject(String projectId,String userId){
+        ObjectId objectProjectId = new ObjectId(projectId);
+        ObjectId objectUserId = new ObjectId(userId);
+        if(objectProjectId == null || objectUserId == null){
+            throw new NotFoundException("Project or User ID is Empty");
+        }
+        List<Project> projectList = userRepository.getUserSubscribedProject(userId);
+        Optional<Project> project = projectRepository.findById(objectProjectId);
+        if(project.isEmpty()){
+            throw new NotFoundException("Project is Empty");
+        }
+        projectList.add(project.get());
+        return true;
+
+
+
+    }
+
+
+    public boolean unsubscribeToProject(String projectId,String userId){
+        ObjectId objectProjectId = new ObjectId(projectId);
+        ObjectId objectUserId = new ObjectId(userId);
+        if(objectProjectId == null || objectUserId == null){
+            throw new NotFoundException("Project or User ID is Empty");
+        }
+        List<Project> projectList = userRepository.getUserSubscribedProject(userId);
+        Optional<Project> project = projectRepository.findById(objectProjectId);
+        if(project.isEmpty()){
+            throw new NotFoundException("Project is Empty");
+        }
+        projectList.remove(project.get());
+        return true;
+
+
+
+    }
+
+
+
+    public List<ProjectResponseDTO> getTrendingProjects(){
+        List<Optional<Project>> projects = projectRepository.findByContributersCount();
+
+        if(projects == null){
+            throw new NotFoundException("No List")
+        }
+
+        projects.stream().map((project ) -> {
+
+        }  )
+
+
+        return projects;
+
+    }
+
+
+    public List<ProjectResponseDTO> geTrendingProjectForUser(String userId){
+        ObjectId objectId = new ObjectId(userId);
+        User user = userRepository.getById(objectId);
+        List<String> interests = user.getInterests();
+
+    }
+
+
+    public List<ProjectResponseDTO> searchForProject(
+            String projectTitle,
+            String projectDesc,
+            List<String> tags,
+            String userId
+    ){
+
+
+        List<Optional<Project>> projects  = projectRepository.findAllByTitle(projectTitle);
+        List<Optional<Project>> projectByDesc = projectRepository.findAllByDescription(projectDesc);
+        List<Optional<Project>> projectTags = projectRepository.findAllByTechRequirementsIsContaining(tags);
+
+
+        if(projectByDesc === null || projectTags === null || projects === null){
+            throw new NotFoundException("No Projects found");
+        }
+
+
+
+        return projects || projectsDesc || projectTags;
+
+
+
+
+
+    }
+
+
+
+
+
 }

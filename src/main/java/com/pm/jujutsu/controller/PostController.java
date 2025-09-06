@@ -1,11 +1,16 @@
 package com.pm.jujutsu.controller;
 
 
+import com.azure.core.annotation.Get;
+import com.azure.core.annotation.Put;
 import com.pm.jujutsu.dtos.PostRequestDTO;
 import com.pm.jujutsu.dtos.PostResponseDTO;
+import com.pm.jujutsu.model.Post;
+import com.pm.jujutsu.repository.PostRepository;
 import com.pm.jujutsu.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,6 +20,8 @@ public class PostController {
 
     @Autowired
     public PostService postService;
+    @Autowired
+    private PostRepository postRepository;
 
 
     @GetMapping("/get-post/{postId}/")
@@ -71,6 +78,56 @@ public class PostController {
         }
 
     }
+
+
+    @PutMapping("/{postId}/like-post")
+    public ResponseEntity<Void> likeAPost(
+            @PathVariable("postId") String postId
+    ){
+
+        return postService.increaseLike(postId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+
+    }
+
+    @PutMapping("/unlike-post")
+    public ResponseEntity<Void> unlikePost(
+            @PathVariable("postId") String postId
+    ){
+        return postService.decreaseLike(postId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{postId}/comment")
+    public ResponseEntity<Void> commentOnPost(
+
+            @PathVariable("postId") String postId,
+            @RequestBody String userId,
+            @RequestBody String comment
+
+    ){
+
+
+         return postService.commentOnPost(postId,userId,comment) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+
+    }
+
+
+
+
+
+
+    @GetMapping("/trending-posts")
+    public ResponseEntity<PostResponseDTO> getTrendingPost(
+
+    ){
+
+    }
+
+
+    @GetMapping("/for-you-post")
+    public ResponseEntity<PostResponseDTO> forYouPosts(){
+
+    }
+
 
 
 

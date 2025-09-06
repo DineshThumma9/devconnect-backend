@@ -12,12 +12,14 @@ import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.Encoder;
 import com.pm.jujutsu.utils.JwtUtil;
 import org.bson.types.ObjectId;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -142,5 +144,32 @@ public class UserService {
         deleteOldProfilePicture(userToDelete.getProfilePicUrl());
 
         userRepository.delete(userToDelete);
+    }
+
+
+    public boolean addFollower(String userId,String ownerId ){
+        ObjectId ownerObjectId = new ObjectId(userId);
+        ObjectId userObjectId = new ObjectId(ownerId);
+        Optional<User> owner = userRepository.getById(ownerObjectId);
+        Optional<User> user = userRepository.getById(userObjectId);
+        if(user.isEmpty() || owner.isEmpty()){
+            throw new NotFoundException("User or owner not found");
+        }
+        User owner = user.get();
+        owner.setFollower(user.get());
+        return true
+    }
+
+    public boolean removeFollower(String userId,String ownerId ){
+        ObjectId ownerObjectId = new ObjectId(userId);
+        ObjectId userObjectId = new ObjectId(ownerId);
+        Optional<User> owner = userRepository.getById(ownerObjectId);
+        Optional<User> user = userRepository.getById(userObjectId);
+        if(user.isEmpty() || owner.isEmpty()){
+            throw new NotFoundException("User or owner not found");
+        }
+        User owner = user.get();
+        owner.removeFollower(user.get());
+        return true;
     }
 }

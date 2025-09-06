@@ -1,9 +1,11 @@
 package com.pm.jujutsu.controller;
 
+import com.pm.jujutsu.dtos.PostResponseDTO;
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
 import com.pm.jujutsu.mappers.UserMappers;
 import com.pm.jujutsu.service.AzureBlobService;
+import com.pm.jujutsu.service.Neo4jService;
 import com.pm.jujutsu.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -24,6 +27,10 @@ public class UserController {
 
     @Autowired
     public AzureBlobService azureBlobService;
+
+
+    @Autowired
+    public Neo4jService  neo4jService;
 
     @GetMapping("/get-user/{id}")
     public ResponseEntity<UserResponseDTO> getUser(@PathVariable String id) {
@@ -53,4 +60,40 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.ok().build();
     }
+
+
+    @PostMapping("/intersets")
+    public ResponseEntity<Void> userIntersets(@RequestBody List<String> tags,@RequestBody String userId){
+        userService.updateUser(new UserRequestDTO(tags=tags));
+        neo4jService.syncUserTags(userId,tags);
+    }
+
+
+    @PostMapping("/like")
+    public ResponseEntity<Void> like(
+
+    ){
+
+
+    }
+
+
+
+
+
+    @GetMapping("/")
+    public ResponseEntity<PostResponseDTO> getTrendingPost(
+
+    ){
+
+    }
+
+
+    @GetMapping("/for-you-connections")
+    public ResponseEntity<PostResponseDTO> forYouConnections(){
+
+    }
+
+
+
 }

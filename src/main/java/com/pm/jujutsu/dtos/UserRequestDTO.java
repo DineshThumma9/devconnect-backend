@@ -3,6 +3,9 @@ package com.pm.jujutsu.dtos;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 public class UserRequestDTO {
 
@@ -19,6 +22,10 @@ public class UserRequestDTO {
     public String username;
 
     public String profile_pic;
+
+
+    public List<String> interestsTags = new ArrayList<>();
+
 
     public @NotBlank String getName() {
         return name;

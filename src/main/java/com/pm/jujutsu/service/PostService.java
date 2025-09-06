@@ -11,9 +11,13 @@ import com.pm.jujutsu.repository.PostRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import org.bson.types.ObjectId;
+import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,6 +34,10 @@ public class PostService {
 
     @Autowired
     public JwtUtil jwtUtil;
+
+
+    @Autowired
+    private MultipleOpenApiSupportConfiguration multipleOpenApiSupportConfiguration;
 
     public PostResponseDTO createPost(PostRequestDTO postRequestDTO) {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
@@ -104,4 +112,84 @@ public class PostService {
         postRepository.deleteById(objectId);
         return true;
     }
+
+    public boolean increaseLike(String postId) {
+        ObjectId objectId = new ObjectId(postId);
+        Optional<Post> post = postRepository.findById(objectId);
+        if(post.isPresent()){
+            Post post1 = post.get();
+            post1.setLikes(post1.getLikes()+1);
+            return true;
+        }
+        else {
+            return false;
+        }
+
+
+    }
+
+
+    public boolean decreaseLike(String postId) {
+        ObjectId objectId = new ObjectId(postId);
+        Optional<Post> post = postRepository.findById(objectId);
+        if(post.isPresent()){
+            Post post1 = post.get();
+            post1.setLikes(post1.getLikes()-1);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+
+    public boolean commentOnPost(String postId,String userId,String comment){
+        ObjectId postObjectId = new ObjectId(postId);
+        ObjectId userObjectId = new ObjectId(userId);
+        Optional<Post> post = postRepository.findById(postObjectId);
+        Optional<User> user = userRepository.getById(userObjectId);
+        if(post.isEmpty()){
+            throw new NotFoundException("Post Doesnt Exist");
+        }
+        if (user.isEmpty()){
+            throw new NotFoundException("User Not Found");
+        }
+
+        Post post1 = post.get();
+        post1.setComments(post1.getComments()+1);
+        return true;
+
+
+    }
+
+    public boolean shareAPost(String postId){
+        ObjectId objectId = new ObjectId(postId);
+        Optional<Post>  post = postRepository.findById(objectId);
+        if(post.isEmpty()){
+            return false;
+        }
+        Post post1 = post.get();
+        post1.setShares(post1.getShares()+1);
+        return true;
+
+    }
+
+
+    public List<PostResponseDTO> trendingPosts(){
+
+    }
+
+
+    public List<PostResponseDTO> trendingPostForUser(String userId){
+
+    }
+
+
+    public List<PostResponseDTO> fetchPostOfConnections(String userId){
+
+
+        //Sort them by time and direct friends , interest tags , f
+    }
+
+
 }

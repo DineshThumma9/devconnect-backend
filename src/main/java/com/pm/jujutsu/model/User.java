@@ -1,7 +1,8 @@
 package com.pm.jujutsu.model;
 
 
-import com.pm.jujutsu.dtos.UserResponseDTO;
+
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -42,14 +43,23 @@ public class User {
     private String profilePicUrl;
 
 
-    private List<UserResponseDTO> followers = new ArrayList<>();
-    private List<UserResponseDTO> following = new ArrayList<>();
+
+    private List<User> followers = new ArrayList<>();
+
+    private List<User> following = new ArrayList<>();
+
+
     private List<String> interests = new ArrayList<>();
+
+    public List<Project> subscribedProjects = new ArrayList<>();
+
 
 
     public void removeFollower(User user) {
+        followers.remove(user);
     }
 
     public void setFollower(User user) {
+        followers.add(user);
     }
 }

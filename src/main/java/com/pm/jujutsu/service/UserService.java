@@ -153,11 +153,11 @@ public class UserService {
         Optional<User> owner = userRepository.getById(ownerObjectId);
         Optional<User> user = userRepository.getById(userObjectId);
         if(user.isEmpty() || owner.isEmpty()){
-            throw new NotFoundException("User or owner not found");
+            return false;
         }
-        User owner = user.get();
-        owner.setFollower(user.get());
-        return true
+        User owner1 = user.get();
+        owner1.setFollower(user.get());
+        return true;
     }
 
     public boolean removeFollower(String userId,String ownerId ){
@@ -166,10 +166,12 @@ public class UserService {
         Optional<User> owner = userRepository.getById(ownerObjectId);
         Optional<User> user = userRepository.getById(userObjectId);
         if(user.isEmpty() || owner.isEmpty()){
-            throw new NotFoundException("User or owner not found");
+            return false;
         }
-        User owner = user.get();
-        owner.removeFollower(user.get());
+        User owner1 = user.get();
+        owner1.removeFollower(user.get());
         return true;
     }
+
+
 }

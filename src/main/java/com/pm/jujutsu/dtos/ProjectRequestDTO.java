@@ -14,8 +14,6 @@ import java.util.List;
 public class ProjectRequestDTO {
 
 
-
-
     @NotNull
     private String title;
 
@@ -43,44 +41,6 @@ public class ProjectRequestDTO {
 
     private String[] media;
 
-
-    public @NotNull String getTitle() {
-        return title;
-    }
-
-    public void setTitle(@NotNull String title) {
-        this.title = title;
-    }
-
-    public @NotNull String getDescription() {
-        return description;
-    }
-
-    public void setDescription(@NotNull String description) {
-        this.description = description;
-    }
-
-    public @NotNull List<String> getTechRequirements() {
-        return techRequirements;
-    }
-
-    public void setTechRequirements(@NotNull List<String> techRequirements) {
-        this.techRequirements = techRequirements;
-    }
-
-    public boolean isPrivate() {
-        return isPrivate;
-    }
-
-    public void setPrivate(boolean aPrivate) {
-        isPrivate = aPrivate;
-    }
-
-    public String getGithubLink() {
-        return githubLink;
-    }
-
-    public void setGithubLink(String githubLink) {
-        this.githubLink = githubLink;
-    }
 }
+
+

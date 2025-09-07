@@ -9,6 +9,7 @@ import com.pm.jujutsu.service.Neo4jService;
 import com.pm.jujutsu.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -63,36 +64,46 @@ public class UserController {
 
 
     @PostMapping("/intersets")
-    public ResponseEntity<Void> userIntersets(@RequestBody List<String> tags,@RequestBody String userId){
-        userService.updateUser(new UserRequestDTO(tags=tags));
-        neo4jService.syncUserTags(userId,tags);
+    public ResponseEntity<Void> userIntersets(@RequestBody UserRequestDTO user,@RequestBody String userId){
+        userService.updateUser(user);
+        neo4jService.syncUserTags(userId,user.interests);
+        return  ResponseEntity.ok().build();
     }
 
 
-    @PostMapping("/like")
-    public ResponseEntity<Void> like(
 
+
+    @PutMapping("/follow/{userId}")
+    public ResponseEntity<Void> followUser(
+            @PathVariable("userId") String userId,
+            String ownerId
     ){
 
-
+        return userService.addFollower(userId,ownerId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
 
-
-
-
-    @GetMapping("/")
-    public ResponseEntity<PostResponseDTO> getTrendingPost(
-
+    @PutMapping("/unfollow/{userId}")
+    public ResponseEntity<Void> unFollowUser(
+            @PathVariable("userId") String userId,
+            String ownerId
     ){
 
+        return userService.removeFollower(userId,ownerId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
 
-    @GetMapping("/for-you-connections")
-    public ResponseEntity<PostResponseDTO> forYouConnections(){
 
+
+    @GetMapping("/suggested-connections")
+    public ResponseEntity<UserResponseDTO> suggestedConnection(
+
+    ){
+        return neo4jService.getProjectBasedOnConnectionsAndInterests(
+
+        );
     }
+
 
 
 

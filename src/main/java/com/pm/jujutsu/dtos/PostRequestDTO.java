@@ -23,19 +23,4 @@ public class PostRequestDTO {
      private String[] media;
 
 
-    public @NotNull String getTitle() {
-        return title;
-    }
-
-    public void setTitle(@NotNull String title) {
-        this.title = title;
-    }
-
-    public @NotNull String getContent() {
-        return content;
-    }
-
-    public void setContent(@NotNull String content) {
-        this.content = content;
-    }
 }

@@ -41,7 +41,11 @@ public class Post {
 
 
     private int likes = 0;
-    private int comments = 0;
+
+
+    private int commentsCount = 0;
+
+
     private int shares = 0;
 
 

@@ -25,11 +25,20 @@ public class Project {
     @NotNull
     @Indexed(unique = true)
     private String title;
+
+
     @NotNull
     private String description;
+
+
     private List<String> techRequirements = new ArrayList<>();
+
     private boolean isPrivate = false;
-    private boolean isDeleted = false;
+
+
+
+
+
     private List<ObjectId> currentContributorIds = new ArrayList<>();
     private List<ObjectId> pastContributorIds = new ArrayList<>();
 
@@ -37,9 +46,10 @@ public class Project {
 
     @NotNull
     private String status;  // e.g., "active", "completed"
+
+
     private String githubLink;
 
-    private  String[] media;
 
 
 

@@ -11,6 +11,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class ProjectController {
         return ResponseEntity.ok(projectResponseDTO);
     }
 
-    @PostMapping("/create/")
+    @PostMapping("/create")
     public ResponseEntity<ProjectResponseDTO> createProject(
                                                       @RequestBody ProjectRequestDTO projectRequestDTO) {
         ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO);
@@ -56,28 +57,44 @@ public class ProjectController {
     }
 
 
+    @PutMapping("/subscribe/{userId}/{projectId}")
+    public ResponseEntity<Void> subscribeTo(
+            @PathVariable("projectId") String projectId,
+            @PathVariable("userId") String userId
+    ){
+        return projectService.subscribeToProject(projectId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+
+    }
+
+
+    @DeleteMapping("/subscribe/{userId}/{projectId}")
+    public ResponseEntity<Void> unsubscribeTo(
+            @PathVariable("projectId") String projectId,
+            @PathVariable("userId") String userId
+    ){
+        return projectService.unsubscribeToProject(projectId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+
+    }
+
+
 
     @GetMapping("/trending-projects")
-    public ResponseEntity<PostResponseDTO> getTrendingProjects(
+    public ResponseEntity<List<ProjectResponseDTO>> getTrendingProjects(
      @AuthenticationPrincipal User user
     ){
 
+
+        return ResponseEntity.ok(projectService.getTrendingProjects());
 
 
     }
 
 
-    @GetMapping("/for-you-projects")
-    public ResponseEntity<PostResponseDTO> forYouProjects(
-            @AuthenticationPrincipal User user
+    @GetMapping("/for-you-projects/{userId}")
+    public ResponseEntity<List<ProjectResponseDTO>> forYouProjects(
+            @PathVariable("userId") String userId
     ){
-        ObjectId id = user.getId();
-        User user = userService.getUser(id.toHexString());
 
-
-        List<ProjectResponseDTO> forYouProjects = neo4jService.getProjectBasedOnConnectionsAndInterests(user.getId(),user.getInterests());
-
-
-        return forYouProjects;
+        return ResponseEntity.ok(projectService.recommendProjects(userId));
     }
 }

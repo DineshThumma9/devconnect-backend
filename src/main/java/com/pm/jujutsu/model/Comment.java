@@ -1,7 +1,7 @@
 package com.pm.jujutsu.model;
 
-import com.pm.jujutsu.dtos.UserResponseDTO;
 import lombok.Data;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 
@@ -10,8 +10,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Comment {
 
 
-    public String commentId;
+    public ObjectId id;
     public String postId;
-    public UserResponseDTO user;
+    public ObjectId userId;
     public String comment;
 }

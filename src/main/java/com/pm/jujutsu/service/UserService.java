@@ -8,9 +8,11 @@ import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.UserMappers;
 import com.pm.jujutsu.model.User;
+
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.Encoder;
 import com.pm.jujutsu.utils.JwtUtil;
+import jakarta.websocket.OnClose;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class UserService {
@@ -39,6 +43,11 @@ public class UserService {
 
     @Autowired
     private AzureBlobService azureBlobService;
+
+
+
+    @Autowired
+    private Neo4jService neo4jService;
 
     public List<UserResponseDTO> getAllUser() {
         List<User> users = userRepository.findAll();
@@ -157,6 +166,7 @@ public class UserService {
         }
         User owner1 = user.get();
         owner1.setFollower(user.get());
+        neo4jService.followRelationship(userId,ownerId);
         return true;
     }
 
@@ -170,8 +180,43 @@ public class UserService {
         }
         User owner1 = user.get();
         owner1.removeFollower(user.get());
+        neo4jService.unfollowRelationship(userId,ownerId);
         return true;
     }
+
+
+    public List<UserResponseDTO> getRecommendConnections(String userId){
+        ObjectId objectId = new ObjectId(userId);
+        Optional<User> userOpt = userRepository.findById(objectId);
+
+        if(userOpt.isEmpty()){
+            return List.of();
+        }
+
+        User user = userOpt.get();
+        List<String> recommendUsers = neo4jService.getConnectionBasedOnInterest(user.getInterests());
+        List<String> recommendConnections = neo4jService.getConnectionsBasedOnConnectionsAndInterests(userId, user.getInterests());
+
+
+
+
+        recommendConnections.addAll(recommendUsers);
+        List<String> uniqueUserIds = recommendConnections.stream().distinct().toList();
+
+        List<ObjectId> objectIds = uniqueUserIds.stream()
+                .map(ObjectId::new)
+                .toList();
+
+
+        List<User> users = StreamSupport.stream(userRepository.findAllById(objectIds).spliterator(), false)
+                .collect(Collectors.toList());
+
+
+        return users.stream()
+                .map(userMappers::toResponseEntity)
+                .collect(Collectors.toList());
+    }
+
 
 
 }

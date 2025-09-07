@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/posts/")
 public class PostController {
@@ -39,7 +41,7 @@ public class PostController {
     }
 
 
-    @PostMapping("/create/")
+    @PostMapping("/create")
     public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO postRequestDTO){
 
         PostResponseDTO postResponseDTO = null;
@@ -50,7 +52,7 @@ public class PostController {
     }
 
 
-    @PutMapping("/update/{postId}/")
+    @PutMapping("/update/{postId}")
     public ResponseEntity<PostResponseDTO> updatePost(
             @PathVariable("postId") String postId,
             @RequestBody  PostRequestDTO postRequestDTO
@@ -80,20 +82,22 @@ public class PostController {
     }
 
 
-    @PutMapping("/{postId}/like-post")
+    @PutMapping("/{postId}/like-post/{userId}")
     public ResponseEntity<Void> likeAPost(
-            @PathVariable("postId") String postId
+            @PathVariable("postId") String postId,
+            @PathVariable("userId") String userId
     ){
 
-        return postService.increaseLike(postId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        return postService.increaseLike(postId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
 
     }
 
-    @PutMapping("/unlike-post")
+    @DeleteMapping("/{postid}/unlike-post/{userId}")
     public ResponseEntity<Void> unlikePost(
-            @PathVariable("postId") String postId
+            @PathVariable("postId") String postId,
+            @PathVariable("userId") String userId
     ){
-        return postService.decreaseLike(postId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        return postService.decreaseLike(postId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{postId}/comment")
@@ -116,15 +120,20 @@ public class PostController {
 
 
     @GetMapping("/trending-posts")
-    public ResponseEntity<PostResponseDTO> getTrendingPost(
+    public ResponseEntity<List<PostResponseDTO>> getTrendingPost(
 
     ){
+
+        return ResponseEntity.ok(postService.getTrendingPost());
 
     }
 
 
-    @GetMapping("/for-you-post")
-    public ResponseEntity<PostResponseDTO> forYouPosts(){
+    @GetMapping("/for-you-post/{userId}")
+    public ResponseEntity<List<PostResponseDTO>> forYouPosts(
+            @PathVariable("userId") String userId
+    ){
+        return ResponseEntity.ok(postService.getRecommendPosts(userId));
 
     }
 

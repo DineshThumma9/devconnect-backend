@@ -5,8 +5,7 @@ import com.pm.jujutsu.dtos.ProjectResponseDTO;
 import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.ProjectMapper;
-import com.pm.jujutsu.model.Project;
-import com.pm.jujutsu.model.User;
+import com.pm.jujutsu.model.*;
 import com.pm.jujutsu.repository.ProjectRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
@@ -14,11 +13,13 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.nodes.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class ProjectService {
@@ -35,11 +36,22 @@ public class ProjectService {
     @Autowired
     private JwtUtil jwtUtil;
 
+
+    @Autowired
+    private Neo4jService neo4jService;
+
+
+
     public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO) {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
 
         Project project = projectMapper.toEntity(projectRequestDTO);
         project.setOwnerId(currentUserId);
+        ProjectNode projectNode = new ProjectNode();
+        projectNode.setId(String.valueOf(project.getId()));
+        projectNode.setOwner(project.getOwnerId());
+
+        neo4jService.syncProjectTags(project.getId(),project.getTechRequirements());
 
         Project savedProject = projectRepository.save(project);
         return enrichProjectResponse(savedProject);
@@ -136,12 +148,18 @@ public class ProjectService {
         if(objectProjectId == null || objectUserId == null){
             throw new NotFoundException("Project or User ID is Empty");
         }
-        List<Project> projectList = userRepository.getUserSubscribedProject(userId);
+        Optional<User> user = userRepository.findById(objectUserId);
+        if(user.isEmpty()){
+            return false;
+
+        }
+        List<Project> projectList = user.get().getSubscribedProjects();
         Optional<Project> project = projectRepository.findById(objectProjectId);
         if(project.isEmpty()){
             throw new NotFoundException("Project is Empty");
         }
         projectList.add(project.get());
+        neo4jService.createSubscibeRelationship(projectId,userId);
         return true;
 
 
@@ -155,12 +173,18 @@ public class ProjectService {
         if(objectProjectId == null || objectUserId == null){
             throw new NotFoundException("Project or User ID is Empty");
         }
-        List<Project> projectList = userRepository.getUserSubscribedProject(userId);
+        Optional<User> user = userRepository.findById(objectUserId);
+        if(user.isEmpty()){
+            return false;
+
+        }
+        List<Project> projectList = user.get().getSubscribedProjects();
         Optional<Project> project = projectRepository.findById(objectProjectId);
         if(project.isEmpty()){
             throw new NotFoundException("Project is Empty");
         }
         projectList.remove(project.get());
+        neo4jService.removeSubscribeRelationship(projectId,userId);
         return true;
 
 
@@ -169,29 +193,6 @@ public class ProjectService {
 
 
 
-    public List<ProjectResponseDTO> getTrendingProjects(){
-        List<Optional<Project>> projects = projectRepository.findByContributersCount();
-
-        if(projects == null){
-            throw new NotFoundException("No List")
-        }
-
-        projects.stream().map((project ) -> {
-
-        }  )
-
-
-        return projects;
-
-    }
-
-
-    public List<ProjectResponseDTO> geTrendingProjectForUser(String userId){
-        ObjectId objectId = new ObjectId(userId);
-        User user = userRepository.getById(objectId);
-        List<String> interests = user.getInterests();
-
-    }
 
 
     public List<ProjectResponseDTO> searchForProject(
@@ -201,20 +202,7 @@ public class ProjectService {
             String userId
     ){
 
-
-        List<Optional<Project>> projects  = projectRepository.findAllByTitle(projectTitle);
-        List<Optional<Project>> projectByDesc = projectRepository.findAllByDescription(projectDesc);
-        List<Optional<Project>> projectTags = projectRepository.findAllByTechRequirementsIsContaining(tags);
-
-
-        if(projectByDesc === null || projectTags === null || projects === null){
-            throw new NotFoundException("No Projects found");
-        }
-
-
-
-        return projects || projectsDesc || projectTags;
-
+    // TODO
 
 
 
@@ -222,7 +210,47 @@ public class ProjectService {
     }
 
 
+    public List<ProjectResponseDTO> getTrendingProjects(){
+        List<Project> projects =projectRepository.findAllByCurrentContributers();
+        return projects.stream().map(projectMapper::toResponseEntity).toList();
 
 
+    }
+
+
+
+    public List<ProjectResponseDTO> recommendProjects(String userId){
+
+        ObjectId objectId = new ObjectId(userId);
+        Optional<User> userOpt = userRepository.findById(objectId);
+
+        if(userOpt.isEmpty()){
+            return List.of();
+        }
+
+        User user = userOpt.get();
+        List<String> recommendPosts = neo4jService.getProjectBasedOnInterests(userId,user.getInterests());
+        List<String> recommendPostFromConnections = neo4jService.recommendProjectBasedOnConnectionsAndTags(userId, user.getInterests());
+
+        // Combine and remove duplicates
+        recommendPosts.addAll(recommendPostFromConnections);
+        List<String> uniqueUserIds = recommendPosts.stream().distinct().toList();
+
+
+        List<ObjectId> objectIds = uniqueUserIds.stream()
+                .map(ObjectId::new)
+                .toList();
+
+        // Fetch users from repository
+        List<Project> projects = StreamSupport.stream(projectRepository.findAllById(objectIds).spliterator(), false)
+                .collect(Collectors.toList());
+
+        // Map to DTOs
+        return projects.stream()
+                .map(projectMapper::toResponseEntity)
+                .collect(Collectors.toList());
+
+
+    }
 
 }

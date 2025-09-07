@@ -9,7 +9,9 @@ import com.pm.jujutsu.service.Neo4jService;
 import com.pm.jujutsu.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.parameters.P;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -63,7 +65,7 @@ public class UserController {
     }
 
 
-    @PostMapping("/intersets")
+    @PostMapping("/interests")
     public ResponseEntity<Void> userIntersets(@RequestBody UserRequestDTO user,@RequestBody String userId){
         userService.updateUser(user);
         neo4jService.syncUserTags(userId,user.interests);
@@ -95,13 +97,12 @@ public class UserController {
 
 
 
-    @GetMapping("/suggested-connections")
-    public ResponseEntity<UserResponseDTO> suggestedConnection(
+    @GetMapping("/{userId}/suggested-connections")
+    public ResponseEntity<List<UserResponseDTO>> suggestedConnection(
+            @PathVariable("userId") String userId
+            ){
+        return ResponseEntity.ok(userService.getRecommendConnections(userId));
 
-    ){
-        return neo4jService.getProjectBasedOnConnectionsAndInterests(
-
-        );
     }
 
 

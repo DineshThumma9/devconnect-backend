@@ -8,9 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Data
 @Document(value = "posts")
@@ -31,13 +29,18 @@ public class Post {
     @CreatedDate
     private Date createdAt;
 
+
+    private List<String> tags;
+
     @LastModifiedDate
     private Date updatedAt;
 
     private String[] media;
 
 
-    private List<Comment> comments = new ArrayList<>();
+    private Set<Comment> comments = new HashSet<>();
+    private Set<ObjectId> likedBy = new HashSet<>();
+    private Set<ObjectId> sharedBy = new HashSet<>();
 
 
     private int likes = 0;

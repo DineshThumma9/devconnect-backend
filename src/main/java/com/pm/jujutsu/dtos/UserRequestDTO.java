@@ -4,7 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class UserRequestDTO {
@@ -24,7 +26,7 @@ public class UserRequestDTO {
     public String profile_pic;
 
 
-    public List<String> interests = new ArrayList<>();
+    public Set<String> interests = new HashSet<>();
 
 
 

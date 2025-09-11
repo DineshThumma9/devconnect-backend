@@ -10,7 +10,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Document(value = "projects")
@@ -31,7 +33,7 @@ public class Project {
     private String description;
 
 
-    private List<String> techRequirements = new ArrayList<>();
+    private Set<String> techRequirements = new HashSet<>();
 
     private boolean isPrivate = false;
 
@@ -39,8 +41,8 @@ public class Project {
 
 
 
-    private List<ObjectId> currentContributorIds = new ArrayList<>();
-    private List<ObjectId> pastContributorIds = new ArrayList<>();
+    private Set<ObjectId> currentContributorIds = new HashSet<>();
+    private Set<ObjectId> pastContributorIds = new HashSet<>();
 
 
 

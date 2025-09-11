@@ -17,7 +17,7 @@ import java.util.Set;
 public class UserNode {
 
     @Id
-    private String id;
+    private ObjectId id;
 
     @Relationship(type = "INTERESTED_IN", direction = Relationship.Direction.OUTGOING)
     private Set<TagNode> interestedIn = new HashSet<>();

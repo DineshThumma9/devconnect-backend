@@ -17,7 +17,7 @@ import java.util.Set;
 public class PostNode {
 
     @Id
-    private String id;
+    private ObjectId id;
 
     @Relationship(type = "LIKED_BY", direction = Relationship.Direction.INCOMING)
     private Set<UserNode> likedBy = new HashSet<>();

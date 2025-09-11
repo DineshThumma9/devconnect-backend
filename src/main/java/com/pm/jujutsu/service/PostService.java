@@ -2,7 +2,6 @@ package com.pm.jujutsu.service;
 
 import com.pm.jujutsu.dtos.PostRequestDTO;
 import com.pm.jujutsu.dtos.PostResponseDTO;
-import com.pm.jujutsu.dtos.UserResponseDTO;
 import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.PostMapper;
@@ -18,9 +17,7 @@ import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfigurati
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.data.neo4j.core.Neo4jTemplate;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
-import org.springframework.web.ErrorResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -48,26 +45,20 @@ public class PostService {
     @Autowired
     public Neo4jService neo4jService;
 
-    @Autowired
-    private MultipleOpenApiSupportConfiguration multipleOpenApiSupportConfiguration;
-    @Autowired
-    private Neo4jTemplate neo4jTemplate;
-    @Autowired
-    private Neo4jClient neo4jClient;
+
+
+
 
     public PostResponseDTO createPost(PostRequestDTO postRequestDTO) {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
         Post post = postMapper.toEntity(postRequestDTO);
         post.setOwnerId(currentUserId); // Ensure the post is owned by current user
-
-
-        PostNode postNode = new PostNode();
-        postNode.setId(String.valueOf(post.getId()));
-        neo4jService.syncPostTags(postNode.getId(), (Set<String>) post.getTags());
-
-
-
         Post savedPost = postRepository.save(post);
+        PostNode postNode = new PostNode();
+        postNode.setId(post.getId());
+        neo4jService.syncPostTags(postNode.getId(),  post.getTags());
+
+
 
         PostResponseDTO responseDTO = postMapper.toResponseEntity(savedPost);
 
@@ -83,7 +74,7 @@ public class PostService {
     public PostResponseDTO updatePost(PostRequestDTO postRequestDTO, String postId) {
         ObjectId objectId = new ObjectId(postId);
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
-        
+
         Post post = postRepository.findById(objectId)
                 .orElseThrow(() -> new NotFoundException("Post Not Found"));
 
@@ -92,15 +83,10 @@ public class PostService {
         }
 
 
-
-
-
         post.setTitle(postRequestDTO.getTitle());
         post.setContent(postRequestDTO.getContent());
 
-        Map<String,Object> postNode = neo4jService.getPostById(postId);
-
-
+        Map<String, Object> postNode = neo4jService.getPostById(postId);
 
 
         Post savedPost = postRepository.save(post);
@@ -119,7 +105,7 @@ public class PostService {
         ObjectId objectId = new ObjectId(postId);
         Post post = postRepository.findById(objectId)
                 .orElseThrow(() -> new NotFoundException("Post not found"));
-        
+
         PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
 
         Optional<User> owner = userRepository.findById(post.getOwnerId());
@@ -127,7 +113,7 @@ public class PostService {
             responseDTO.setOwnerUsername(owner.get().getUsername());
             responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
         }
-        
+
         return responseDTO;
     }
 
@@ -143,20 +129,22 @@ public class PostService {
         }
 
         postRepository.deleteById(objectId);
+
         return true;
     }
 
-    public boolean increaseLike(String postId,String userId) {
+    public boolean increaseLike(String postId) {
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
-        if(post.isPresent()){
+        if (post.isPresent()) {
             Post post1 = post.get();
 
-            post1.setLikes(post1.getLikes()+1);
-            neo4jService.createLikeRelationship(postId,userId);
+            post1.setLikes(post1.getLikes() + 1);
+            ObjectId userId = jwtUtil.getCurrentUser().getId();
+            neo4jService.createLikeRelationship(postId, String.valueOf(userId));
+            postRepository.save(post1);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
 
@@ -164,31 +152,32 @@ public class PostService {
     }
 
 
-    public boolean decreaseLike(String postId,String userId) {
+    public boolean decreaseLike(String postId) {
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
-        if(post.isPresent()){
+        if (post.isPresent()) {
             Post post1 = post.get();
-            post1.setLikes(post1.getLikes()-1);
-            neo4jService.removeLikeRelationship(postId,userId);
+            post1.setLikes(post1.getLikes() - 1);
+            ObjectId userId = jwtUtil.getCurrentUser().getId();
+            neo4jService.removeLikeRelationship(postId, String.valueOf(userId));
+            postRepository.save(post1);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
 
-    public boolean commentOnPost(String postId,String userId,String comment){
+    public boolean commentOnPost(String postId, String comment) {
         ObjectId postObjectId = new ObjectId(postId);
-        ObjectId userObjectId = new ObjectId(userId);
+        ObjectId userObjectId = jwtUtil.getCurrentUser().getId();
 
         Optional<Post> post = postRepository.findById(postObjectId);
         Optional<User> user = userRepository.getById(userObjectId);
-        if(post.isEmpty()){
+        if (post.isEmpty()) {
             throw new NotFoundException("Post Doesnt Exist");
         }
-        if (user.isEmpty()){
+        if (user.isEmpty()) {
             throw new NotFoundException("User Not Found");
         }
 
@@ -197,47 +186,49 @@ public class PostService {
         comment1.setPostId(postId);
         comment1.setUserId(userObjectId);
         comment1.setComment(comment);
-        post1.setCommentsCount((post1.getCommentsCount()+1);
+        post1.setCommentsCount((post1.getCommentsCount() + 1));
+        postRepository.save(post1);
         return true;
 
 
     }
 
-    public boolean shareAPost(String postId){
+    public boolean shareAPost(String postId) {
         ObjectId objectId = new ObjectId(postId);
-        Optional<Post>  post = postRepository.findById(objectId);
-        if(post.isEmpty()){
+        Optional<Post> post = postRepository.findById(objectId);
+        if (post.isEmpty()) {
             return false;
         }
         Post post1 = post.get();
 
-        post1.setShares(post1.getShares()+1);
+        post1.setShares(post1.getShares() + 1);
+        postRepository.save(post1);
         return true;
 
     }
 
 
-
-    public List<PostResponseDTO> getTrendingPost(){
+    public List<PostResponseDTO> getTrendingPost() {
         List<Post> posts = postRepository.findAllByLikes();
-       List<PostResponseDTO> postResponseDTOS  = posts.stream().map(postMapper::toResponseEntity).toList();
+        List<PostResponseDTO> postResponseDTOS = posts.stream().map(postMapper::toResponseEntity).toList();
         return postResponseDTOS;
 
 
     }
 
 
-    public List<PostResponseDTO> getRecommendPosts(String userId){
-        ObjectId objectId = new ObjectId(userId);
+    public List<PostResponseDTO> getRecommendPosts() {
+        ObjectId objectId = jwtUtil.getCurrentUser().getId();
         Optional<User> userOpt = userRepository.findById(objectId);
 
-        if(userOpt.isEmpty()){
+        if (userOpt.isEmpty()) {
             return List.of();
         }
 
         User user = userOpt.get();
-        List<String> recommendPosts = neo4jService.recommendPostBasedOnTags(user.getInterests());
-        List<String> recommendPostFromConnections = neo4jService.recommendPostBasedOnConnectionsAndTags(userId, user.getInterests());
+        List<String> recommendPosts = neo4jService.recommendPostBasedOnTags(jwtUtil.getCurrentUser().getId(),user.getInterests());
+        List<String> recommendPostFromConnections =
+                neo4jService.recommendPostBasedOnConnectionsAndTags(String.valueOf(jwtUtil.getCurrentUser().getId()), user.getInterests());
 
         // Combine and remove duplicates
         recommendPosts.addAll(recommendPostFromConnections);
@@ -257,7 +248,6 @@ public class PostService {
                 .map(postMapper::toResponseEntity)
                 .collect(Collectors.toList());
     }
-
 
 
 }

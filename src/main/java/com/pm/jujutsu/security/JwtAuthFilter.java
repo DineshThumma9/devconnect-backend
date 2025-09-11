@@ -1,11 +1,13 @@
 package com.pm.jujutsu.security;
 
+import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.service.JwtUserDetailsService;
 import com.pm.jujutsu.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.autoconfigure.web.embedded.NettyWebServerFactoryCustomizer;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,10 +22,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final JwtUserDetailsService userDetailsService;
+    private final NettyWebServerFactoryCustomizer nettyWebServerFactoryCustomizer;
 
-    public JwtAuthFilter(JwtUtil jwtUtil, JwtUserDetailsService userDetailsService) {
+    public JwtAuthFilter(JwtUtil jwtUtil, JwtUserDetailsService userDetailsService, NettyWebServerFactoryCustomizer nettyWebServerFactoryCustomizer) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.nettyWebServerFactoryCustomizer = nettyWebServerFactoryCustomizer;
     }
 
     @Override
@@ -54,6 +58,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             // Invalid token, continue without authentication
+            throw  new NotFoundException("Auth not found");
         }
         
         filterChain.doFilter(request, response);

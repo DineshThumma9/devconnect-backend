@@ -15,15 +15,15 @@ import java.util.Set;
 public class ProjectNode {
 
     @Id
-    private String id;
+    private ObjectId id;
 
     private String title;
     private String desc;
 
-    @Relationship(type = "OWNER", direction = Relationship.Direction.INCOMING)
+    @Relationship(type = "OWNED_BY", direction = Relationship.Direction.INCOMING)
     private UserNode owner;
 
-    @Relationship(type = "CONTRIBUTING", direction = Relationship.Direction.INCOMING)
+    @Relationship(type = "CONTRIBUTING_TO", direction = Relationship.Direction.INCOMING)
     private Set<UserNode> currentContributors = new HashSet<>();
 
     @Relationship(type = "WORKS_WITH", direction = Relationship.Direction.OUTGOING)

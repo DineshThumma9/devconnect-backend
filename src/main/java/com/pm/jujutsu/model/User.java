@@ -12,7 +12,9 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Document(value = "users")
@@ -44,14 +46,14 @@ public class User {
 
 
 
-    private List<User> followers = new ArrayList<>();
+    private Set<User> followers = new HashSet<>();
 
-    private List<User> following = new ArrayList<>();
+    private Set<User> following = new HashSet<>();
 
 
-    private List<String> interests = new ArrayList<>();
+    private Set<String> interests = new HashSet<>();
 
-    public List<Project> subscribedProjects = new ArrayList<>();
+    public Set<Project> subscribedProjects = new HashSet<>();
 
 
 

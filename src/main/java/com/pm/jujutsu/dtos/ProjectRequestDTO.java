@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Getter
@@ -20,19 +22,13 @@ public class ProjectRequestDTO {
 
     private String ownerId;
 
-    public String getOwnerId() {
-        return ownerId;
-    }
 
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
-    }
 
     @NotNull
     private String description;
 
     @NotNull
-    private List<String> techRequirements;
+    private Set<String> techRequirements = new HashSet<>();
 
     private boolean isPrivate;  // optional: default false
 

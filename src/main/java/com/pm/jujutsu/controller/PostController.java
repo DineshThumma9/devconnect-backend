@@ -1,143 +1,140 @@
 package com.pm.jujutsu.controller;
 
 
-import com.azure.core.annotation.Get;
-import com.azure.core.annotation.Put;
 import com.pm.jujutsu.dtos.PostRequestDTO;
 import com.pm.jujutsu.dtos.PostResponseDTO;
-import com.pm.jujutsu.model.Post;
-import com.pm.jujutsu.repository.PostRepository;
 import com.pm.jujutsu.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/posts/")
+@RequestMapping("/posts")
 public class PostController {
 
 
     @Autowired
     public PostService postService;
-    @Autowired
-    private PostRepository postRepository;
 
 
-    @GetMapping("/get-post/{postId}/")
+    @GetMapping("/{postId}")
     public ResponseEntity<PostResponseDTO> getPost(
             @PathVariable String postId
-    ){
-        PostResponseDTO postResponseDTO  = postService.getPost(postId);
+    ) {
 
-        if(postResponseDTO != null){
-            return ResponseEntity.ok(postResponseDTO);
-        }
-        else{
-            return ResponseEntity.notFound().build();
-        }
+
+        PostResponseDTO post = postService.getPost(postId);
+        return post != null ? ResponseEntity.ok(post) : ResponseEntity.notFound().build();
+
     }
 
 
     @PostMapping("/create")
-    public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO postRequestDTO){
+    public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO postRequestDTO) {
 
-        PostResponseDTO postResponseDTO = null;
-            postResponseDTO = postService.createPost(postRequestDTO);
 
-        return ResponseEntity.ok(postResponseDTO);
+        return ResponseEntity.ok(postService.createPost(postRequestDTO));
 
     }
 
 
-    @PutMapping("/update/{postId}")
+    @PutMapping("/{postId}")
     public ResponseEntity<PostResponseDTO> updatePost(
             @PathVariable("postId") String postId,
-            @RequestBody  PostRequestDTO postRequestDTO
+            @RequestBody PostRequestDTO postRequestDTO
 
-    ){
-        PostResponseDTO postResponseDTO = postService.updatePost(postRequestDTO,postId);
-        return  ResponseEntity.ok(postResponseDTO);
+    ) {
 
+        return ResponseEntity.ok(postService.updatePost(postRequestDTO, postId));
 
 
     }
 
 
-    @DeleteMapping("/delete/{postId}")
+    @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
             @PathVariable("postId") String postId
-    ){
+    ) {
 
-        if(postService.deletePost(postId)){
-            return ResponseEntity.ok().build();
-        }
-        else {
 
-            return ResponseEntity.notFound().build();
-        }
+        return postService.deletePost(postId) ?
+                ResponseEntity.ok().build() :
+                ResponseEntity.notFound().build();
+
 
     }
 
 
-    @PutMapping("/{postId}/like-post/{userId}")
+    @PutMapping("/like/{postId}")
     public ResponseEntity<Void> likeAPost(
-            @PathVariable("postId") String postId,
-            @PathVariable("userId") String userId
-    ){
+            @PathVariable("postId") String postId
 
-        return postService.increaseLike(postId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    ) {
+
+        return postService.increaseLike(postId) ?
+                ResponseEntity.ok().build() :
+                ResponseEntity.notFound().build();
 
     }
 
-    @DeleteMapping("/{postid}/unlike-post/{userId}")
+    @DeleteMapping("/like/{postId}")
     public ResponseEntity<Void> unlikePost(
-            @PathVariable("postId") String postId,
-            @PathVariable("userId") String userId
-    ){
-        return postService.decreaseLike(postId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+            @PathVariable("postId") String postId
+
+
+    ) {
+        return postService.decreaseLike(postId) ?
+                ResponseEntity.ok().build() :
+                ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{postId}/comment")
+    @PutMapping("/comment/{postId}")
     public ResponseEntity<Void> commentOnPost(
 
             @PathVariable("postId") String postId,
-            @RequestBody String userId,
             @RequestBody String comment
 
-    ){
+    ) {
 
 
-         return postService.commentOnPost(postId,userId,comment) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        return postService.commentOnPost(postId, comment) ?
+                ResponseEntity.ok().build() :
+                ResponseEntity.notFound().build();
+
+    }
+
+    @PutMapping("/share/{postId}")
+    public ResponseEntity<Void> share(
+            @PathVariable("postId") String postId
+    ) {
+
+        return postService.shareAPost(postId) ?
+                ResponseEntity.ok().build() :
+                ResponseEntity.notFound().build();
 
     }
 
 
-
-
-
-
-    @GetMapping("/trending-posts")
+    @GetMapping("/trending")
     public ResponseEntity<List<PostResponseDTO>> getTrendingPost(
 
-    ){
+    ) {
 
         return ResponseEntity.ok(postService.getTrendingPost());
 
     }
 
 
-    @GetMapping("/for-you-post/{userId}")
+    @GetMapping("/for-you")
     public ResponseEntity<List<PostResponseDTO>> forYouPosts(
-            @PathVariable("userId") String userId
-    ){
-        return ResponseEntity.ok(postService.getRecommendPosts(userId));
+
+    ) {
+
+        return ResponseEntity.ok(postService.getRecommendPosts());
 
     }
-
-
 
 
 }

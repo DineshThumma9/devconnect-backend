@@ -1,100 +1,80 @@
 package com.pm.jujutsu.controller;
 
-import com.pm.jujutsu.dtos.PostResponseDTO;
 import com.pm.jujutsu.dtos.ProjectRequestDTO;
 import com.pm.jujutsu.dtos.ProjectResponseDTO;
-import com.pm.jujutsu.model.User;
-import com.pm.jujutsu.service.Neo4jService;
 import com.pm.jujutsu.service.ProjectService;
-import com.pm.jujutsu.service.UserService;
-import org.bson.types.ObjectId;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.parameters.P;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 
 @RestController
 @RequestMapping("/projects")
 public class ProjectController {
 
-    @Autowired
-    private ProjectService projectService;
-    @Autowired
-    private Neo4jService neo4jService;
-    @Autowired
-    private UserService userService;
+    private final ProjectService projectService;
 
-    @GetMapping("/get-project/{projectId}")
+    @Autowired
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
+    }
+
+    @GetMapping("/{projectId}")
     public ResponseEntity<ProjectResponseDTO> getProject(@PathVariable String projectId) {
-        ProjectResponseDTO projectResponseDTO = projectService.getProject(projectId);
-        return ResponseEntity.ok(projectResponseDTO);
+        return ResponseEntity.ok(projectService.getProject(projectId));
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<ProjectResponseDTO> createProject(
-                                                      @RequestBody ProjectRequestDTO projectRequestDTO) {
-        ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO);
-        return ResponseEntity.ok(projectResponseDTO);
+            @Valid @RequestBody ProjectRequestDTO projectRequestDTO) {
+        return ResponseEntity.ok(projectService.createProject(projectRequestDTO));
     }
 
-    @PutMapping("/update/{projectId}")
+    @PutMapping("/{projectId}")
     public ResponseEntity<ProjectResponseDTO> updateProject(
             @PathVariable String projectId,
-            @RequestBody ProjectRequestDTO projectRequestDTO) {
-        ProjectResponseDTO projectResponseDTO = projectService.updateProject(projectId, projectRequestDTO);
-        return ResponseEntity.ok(projectResponseDTO);
+            @Valid @RequestBody ProjectRequestDTO projectRequestDTO) {
+        return ResponseEntity.ok(projectService.updateProject(projectId, projectRequestDTO));
     }
 
-    @DeleteMapping("/delete/{projectId}")
+    @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(@PathVariable String projectId) {
-        if (projectService.deleteProject(projectId)) {
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+        return projectService.deleteProject(projectId)
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.notFound().build();
     }
 
-
-    @PutMapping("/subscribe/{userId}/{projectId}")
-    public ResponseEntity<Void> subscribeTo(
-            @PathVariable("projectId") String projectId,
-            @PathVariable("userId") String userId
-    ){
-        return projectService.subscribeToProject(projectId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
-
+    @PostMapping("/{projectId}/subscribe")
+    public ResponseEntity<Void> subscribe(
+            @PathVariable String projectId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return projectService.subscribeToProject(projectId, userDetails.getUsername())
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.notFound().build();
     }
 
-
-    @DeleteMapping("/subscribe/{userId}/{projectId}")
-    public ResponseEntity<Void> unsubscribeTo(
-            @PathVariable("projectId") String projectId,
-            @PathVariable("userId") String userId
-    ){
-        return projectService.unsubscribeToProject(projectId,userId) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
-
+    @DeleteMapping("/{projectId}/subscribe")
+    public ResponseEntity<Void> unsubscribe(
+            @PathVariable String projectId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return projectService.unsubscribeToProject(projectId, userDetails.getUsername())
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.notFound().build();
     }
 
-
-
-    @GetMapping("/trending-projects")
-    public ResponseEntity<List<ProjectResponseDTO>> getTrendingProjects(
-     @AuthenticationPrincipal User user
-    ){
-
-
+    @GetMapping("/trending")
+    public ResponseEntity<List<ProjectResponseDTO>> getTrendingProjects() {
         return ResponseEntity.ok(projectService.getTrendingProjects());
-
-
     }
 
-
-    @GetMapping("/for-you-projects/{userId}")
-    public ResponseEntity<List<ProjectResponseDTO>> forYouProjects(
-            @PathVariable("userId") String userId
-    ){
-
-        return ResponseEntity.ok(projectService.recommendProjects(userId));
+    @GetMapping("/recommendations")
+    public ResponseEntity<List<ProjectResponseDTO>> recommendProjects(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(projectService.recommendProjects(userDetails.getUsername()));
     }
 }

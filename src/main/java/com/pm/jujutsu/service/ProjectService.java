@@ -48,7 +48,7 @@ public class ProjectService {
         Project project = projectMapper.toEntity(projectRequestDTO);
         project.setOwnerId(currentUserId);
         ProjectNode projectNode = new ProjectNode();
-        projectNode.setId(String.valueOf(project.getId()));
+        projectNode.setId(project.getId());
         projectNode.setOwner(project.getOwnerId());
 
         neo4jService.syncProjectTags(project.getId(),project.getTechRequirements());

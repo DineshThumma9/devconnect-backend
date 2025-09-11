@@ -30,7 +30,7 @@ public class Post {
     private Date createdAt;
 
 
-    private List<String> tags;
+    private Set<String> tags;
 
     @LastModifiedDate
     private Date updatedAt;

@@ -118,6 +118,11 @@ spring.data.mongodb.uri=YOUR_ACTUAL_MONGO_URI
 spring.data.mongodb.auto-index-creation=true
 spring.data.mongodb.database=jujutsudb
 
+spring.data.neo4j.database=DB_NAME
+spring.neo4j.uri=neo4j_URI
+spring.neo4j.authentication.password=NEO4J_PASS
+spring.neo4j.authentication.username=NEO4j_USER
+
 ```
 
 

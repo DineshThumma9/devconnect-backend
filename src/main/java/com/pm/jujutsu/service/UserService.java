@@ -9,9 +9,11 @@ import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.UserMappers;
 import com.pm.jujutsu.model.User;
 
+import com.pm.jujutsu.repository.UserNodeRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.Encoder;
 import com.pm.jujutsu.utils.JwtUtil;
+import jakarta.transaction.Transactional;
 import jakarta.websocket.OnClose;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.ObjectProvider;
@@ -48,6 +50,8 @@ public class UserService {
 
     @Autowired
     private Neo4jService neo4jService;
+    @Autowired
+    private UserNodeRepository userNodeRepository;
 
     public List<UserResponseDTO> getAllUser() {
         List<User> users = userRepository.findAll();
@@ -66,9 +70,13 @@ public class UserService {
         User newUser = userMappers.toEntity(user);
         newUser.setHashedPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(newUser);
+
         UserResponseDTO responseDTO = userMappers.toResponseEntity(savedUser);
         return responseDTO;
     }
+
+
+
 
     public UserResponseDTO updateUser(UserRequestDTO user) {
         User updatedUser = userRepository.getUserByEmail(user.getEmail()).orElseThrow(
@@ -81,14 +89,12 @@ public class UserService {
 
         updatedUser.setUsername(user.getUsername());
         updatedUser.setName(user.getName());
-        
-        // Only update profile pic URL if it's provided and different from current
-        if (user.getProfile_pic() != null && !user.getProfile_pic().equals(updatedUser.getProfilePicUrl())) {
-            // If there's an existing profile pic and it's from our blob storage, delete it
 
+
+
+        if (user.getProfilePicUrl() != null && !user.getProfilePicUrl().equals(updatedUser.getProfilePicUrl())) {
             deleteOldProfilePicture(updatedUser.getProfilePicUrl());
-
-            updatedUser.setProfilePicUrl(user.getProfile_pic());
+            updatedUser.setProfilePicUrl(user.getProfilePicUrl());
         }
 
         User newUser = userRepository.save(updatedUser);
@@ -137,11 +143,14 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
+
+
+
     public void deleteUser(String uuid) {
         ObjectId currentUserId = jwtUtils.getCurrentUser().getId();
         ObjectId targetUserId = new ObjectId(uuid);
 
-        // Only allow users to delete their own account
+
         if (!targetUserId.equals(currentUserId)) {
             throw new UnauthorizedException("User is not authorized to delete another user's account");
         }
@@ -149,13 +158,17 @@ public class UserService {
         User userToDelete = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
         
-        // Delete user's profile picture from blob storage
-        deleteOldProfilePicture(userToDelete.getProfilePicUrl());
 
+
+        userNodeRepository.deleteById(targetUserId);
+        deleteOldProfilePicture(userToDelete.getProfilePicUrl());
         userRepository.delete(userToDelete);
+
     }
 
 
+
+    @Transactional
     public boolean addFollower(String userId,String ownerId ){
         ObjectId ownerObjectId = new ObjectId(userId);
         ObjectId userObjectId = new ObjectId(ownerId);
@@ -164,12 +177,14 @@ public class UserService {
         if(user.isEmpty() || owner.isEmpty()){
             return false;
         }
-        User owner1 = user.get();
-        owner1.setFollower(user.get());
+        User owner1 = owner.get();
+        owner1.getFollowingIds().add(userObjectId);
         neo4jService.followRelationship(userId,ownerId);
         return true;
     }
 
+
+    @Transactional
     public boolean removeFollower(String userId,String ownerId ){
         ObjectId ownerObjectId = new ObjectId(userId);
         ObjectId userObjectId = new ObjectId(ownerId);
@@ -178,8 +193,8 @@ public class UserService {
         if(user.isEmpty() || owner.isEmpty()){
             return false;
         }
-        User owner1 = user.get();
-        owner1.removeFollower(user.get());
+        User owner1 = owner.get();
+        owner1.getFollowerIds().add(userObjectId);
         neo4jService.unfollowRelationship(userId,ownerId);
         return true;
     }
@@ -194,7 +209,7 @@ public class UserService {
         }
 
         User user = userOpt.get();
-        List<String> recommendUsers = neo4jService.getConnectionBasedOnInterest(user.getInterests());
+        List<String> recommendUsers = neo4jService.getConnectionsBasedOnInterests(user.getInterests());
         List<String> recommendConnections = neo4jService.getConnectionsBasedOnConnectionsAndInterests(userId, user.getInterests());
 
 

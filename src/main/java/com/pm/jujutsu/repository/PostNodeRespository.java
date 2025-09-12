@@ -15,7 +15,7 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, ObjectId>
 
 
     @Query("MATCH (u:User {id:$userId}) (p:Post {id:$postId} MERGE (p) <- [:LIKED_BY] - (u)")
-    public void likeRelationship(String userId,String postId);
+    void likeRelationship(String userId, String postId);
 
 
     @Query("""
@@ -44,7 +44,7 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, ObjectId>
                            ORDER BY p.timestamp DESC
                            LIMIT 20
             """)
-    List<String> recommendPostBasedOnUserInterests(String userId,Set<String> tags);
+    List<ObjectId> recommendPostBasedOnUserInterests(ObjectId userId, Set<String> tags);
 
 
 
@@ -59,7 +59,7 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, ObjectId>
             LIMIT 20
           
           """)
-    List<String>  recommendPostBasedOnUserFollowsAndInterests(String userId,Set<String> tags);
+    List<ObjectId> recommendPostBasedOnUserFollowsAndInterests(String userId,Set<String> tags);
 
 
 

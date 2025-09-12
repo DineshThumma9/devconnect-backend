@@ -44,24 +44,20 @@ public class User {
     @NotNull
     private String profilePicUrl;
 
-
-
-    private Set<User> followers = new HashSet<>();
-
-    private Set<User> following = new HashSet<>();
+    private Set<ObjectId> followerIds = new HashSet<>();
+    private Set<ObjectId> followingIds = new HashSet<>();
+    private Set<ObjectId> subscribedProjectIds = new HashSet<>();
 
 
     private Set<String> interests = new HashSet<>();
 
-    public Set<Project> subscribedProjects = new HashSet<>();
-
-
-
-    public void removeFollower(User user) {
-        followers.remove(user);
+    public void addInterest(String interest) {
+        interests.add(interest);
     }
 
-    public void setFollower(User user) {
-        followers.add(user);
+    public void removeInterest(String interest) {
+        interests.remove(interest);
     }
+
+    
 }

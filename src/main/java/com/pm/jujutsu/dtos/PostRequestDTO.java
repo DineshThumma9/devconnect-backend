@@ -8,6 +8,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.internal.util.StringHelper;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 @Getter
 @Setter
@@ -19,6 +22,7 @@ public class PostRequestDTO {
      @NotNull
     private String content;
 
+    private Set<String> tags = new HashSet<>();
 
      private String[] media;
 

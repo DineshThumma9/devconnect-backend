@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Getter
@@ -24,6 +26,7 @@ public class PostResponseDTO {
     private int comments;
     private int shares;
     private String[] media;
+    private Set<String> tags = new HashSet<>();
 
 
 }

@@ -1,6 +1,7 @@
 package com.pm.jujutsu.controller;
 
 
+import com.pm.jujutsu.dtos.CommentRequestDTO;
 import com.pm.jujutsu.dtos.PostRequestDTO;
 import com.pm.jujutsu.dtos.PostResponseDTO;
 import com.pm.jujutsu.service.PostService;
@@ -92,14 +93,12 @@ public class PostController {
 
     @PutMapping("/comment/{postId}")
     public ResponseEntity<Void> commentOnPost(
+            CommentRequestDTO comment
 
-            @PathVariable("postId") String postId,
-            @RequestBody String comment
 
     ) {
 
-
-        return postService.commentOnPost(postId, comment) ?
+        return postService.commentOnPost(comment.getPostId(), comment.getComment()) ?
                 ResponseEntity.ok().build() :
                 ResponseEntity.notFound().build();
 

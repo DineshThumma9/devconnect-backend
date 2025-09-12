@@ -1,5 +1,8 @@
 package com.pm.jujutsu.service;
 
+import com.pm.jujutsu.model.PostNode;
+import com.pm.jujutsu.model.Project;
+import com.pm.jujutsu.model.ProjectNode;
 import com.pm.jujutsu.repository.PostNodeRespository;
 import com.pm.jujutsu.repository.ProjectNodeRepository;
 import com.pm.jujutsu.repository.UserNodeRepository;
@@ -9,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -46,11 +51,11 @@ public class Neo4jService {
     }
 
 
-    public List<String> recommendPostBasedOnTags(ObjectId userId, Set<String> tags) {
+    public List<ObjectId> recommendPostBasedOnTags(ObjectId userId, Set<String> tags) {
         return postNodeRespository.recommendPostBasedOnUserInterests(userId, tags);
     }
 
-    public List<String> recommendPostBasedOnConnectionsAndTags(String userId, Set<String> tags) {
+    public List<ObjectId> recommendPostBasedOnConnectionsAndTags(String userId, Set<String> tags) {
         return postNodeRespository.recommendPostBasedOnUserFollowsAndInterests(userId, tags);
 
     }
@@ -100,4 +105,11 @@ public class Neo4jService {
     public void unsubscribeFromProject(String userId, String projectId) {
         projectNodeRepository.unsubscribeRelation(userId, projectId);
     }
+
+    public Optional<PostNode> getPostById(ObjectId postId) {
+        return postNodeRespository.findById(postId);
+    }
+
+
+
 }

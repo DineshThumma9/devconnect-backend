@@ -5,13 +5,11 @@ import com.pm.jujutsu.dtos.PostResponseDTO;
 import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.PostMapper;
-import com.pm.jujutsu.model.Comment;
-import com.pm.jujutsu.model.Post;
-import com.pm.jujutsu.model.PostNode;
-import com.pm.jujutsu.model.User;
+import com.pm.jujutsu.model.*;
 import com.pm.jujutsu.repository.PostRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
+import jakarta.transaction.Transactional;
 import org.bson.types.ObjectId;
 import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +17,7 @@ import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.stereotype.Service;
 
+import java.beans.Transient;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -86,7 +85,11 @@ public class PostService {
         post.setTitle(postRequestDTO.getTitle());
         post.setContent(postRequestDTO.getContent());
 
-        Map<String, Object> postNode = neo4jService.getPostById(postId);
+        Optional<PostNode> postNode = neo4jService.getPostById(objectId);
+
+
+
+
 
 
         Post savedPost = postRepository.save(post);
@@ -133,6 +136,8 @@ public class PostService {
         return true;
     }
 
+
+    @Transactional
     public boolean increaseLike(String postId) {
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
@@ -152,6 +157,7 @@ public class PostService {
     }
 
 
+    @Transactional
     public boolean decreaseLike(String postId) {
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
@@ -168,6 +174,8 @@ public class PostService {
     }
 
 
+
+    @Transactional
     public boolean commentOnPost(String postId, String comment) {
         ObjectId postObjectId = new ObjectId(postId);
         ObjectId userObjectId = jwtUtil.getCurrentUser().getId();
@@ -186,6 +194,7 @@ public class PostService {
         comment1.setPostId(postId);
         comment1.setUserId(userObjectId);
         comment1.setComment(comment);
+
         post1.setCommentsCount((post1.getCommentsCount() + 1));
         postRepository.save(post1);
         return true;
@@ -210,8 +219,7 @@ public class PostService {
 
     public List<PostResponseDTO> getTrendingPost() {
         List<Post> posts = postRepository.findAllByLikes();
-        List<PostResponseDTO> postResponseDTOS = posts.stream().map(postMapper::toResponseEntity).toList();
-        return postResponseDTOS;
+        return posts.stream().map(postMapper::toResponseEntity).toList();
 
 
     }
@@ -226,24 +234,27 @@ public class PostService {
         }
 
         User user = userOpt.get();
-        List<String> recommendPosts = neo4jService.recommendPostBasedOnTags(jwtUtil.getCurrentUser().getId(),user.getInterests());
-        List<String> recommendPostFromConnections =
+        List<ObjectId> recommendPosts =
+                neo4jService.recommendPostBasedOnTags(jwtUtil.getCurrentUser().getId(),user.getInterests());
+
+
+        List<ObjectId> recommendPostFromConnections =
                 neo4jService.recommendPostBasedOnConnectionsAndTags(String.valueOf(jwtUtil.getCurrentUser().getId()), user.getInterests());
 
-        // Combine and remove duplicates
+
+
         recommendPosts.addAll(recommendPostFromConnections);
-        List<String> uniqueUserIds = recommendPosts.stream().distinct().toList();
+        List<ObjectId> uniqueUserIds = recommendPosts.stream().distinct().toList();
 
 
-        List<ObjectId> objectIds = uniqueUserIds.stream()
-                .map(ObjectId::new)
-                .toList();
+
 
         // Fetch users from repository
-        List<Post> posts = StreamSupport.stream(postRepository.findAllById(objectIds).spliterator(), false)
-                .collect(Collectors.toList());
+        List<Post> posts = postRepository.findAllById(uniqueUserIds).stream()
+                .toList();
 
-        // Map to DTOs
+
+
         return posts.stream()
                 .map(postMapper::toResponseEntity)
                 .collect(Collectors.toList());

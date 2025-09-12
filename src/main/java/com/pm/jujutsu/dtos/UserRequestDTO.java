@@ -23,7 +23,7 @@ public class UserRequestDTO {
     @NotBlank
     public String username;
 
-    public String profile_pic;
+    public String profilePicUrl;
 
 
     public Set<String> interests = new HashSet<>();

@@ -1,18 +1,14 @@
 package com.pm.jujutsu.service;
 
 import com.pm.jujutsu.model.PostNode;
-import com.pm.jujutsu.model.Project;
-import com.pm.jujutsu.model.ProjectNode;
 import com.pm.jujutsu.repository.PostNodeRespository;
 import com.pm.jujutsu.repository.ProjectNodeRepository;
 import com.pm.jujutsu.repository.UserNodeRepository;
 import com.pm.jujutsu.utils.JwtUtil;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import com.pm.jujutsu.model.UserNode;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -36,26 +32,35 @@ public class Neo4jService {
     private JwtUtil jwtUtil;
 
 
-    // ---------------- User Tag Sync ----------------
-    public void syncUserTags(ObjectId userId, Set<String> tags) {
+    // ---------------- User Node Management ----------------
+    public void createUserNode(String userId) {
+        UserNode userNode = new UserNode();
+        userNode.setId(userId);
+        userNodeRepository.save(userNode);
+    }
+
+    public void syncUserTags(String userId, Set<String> tags) {
         userNodeRepository.syncUserTags(userId, tags);
     }
 
+    public Optional<UserNode> getUserById(String userId){
+        return  userNodeRepository.findById(userId);
+    }
 
-    public void syncPostTags(ObjectId postId, Set<String> tags) {
+    public void syncPostTags(String postId, Set<String> tags) {
         postNodeRespository.syncPostTags(postId, tags);
     }
 
-    public void syncProjectTags(ObjectId projectId, Set<String> tags) {
+    public void syncProjectTags(String projectId, Set<String> tags) {
         projectNodeRepository.syncProjectTags(projectId, tags);
     }
 
 
-    public List<ObjectId> recommendPostBasedOnTags(ObjectId userId, Set<String> tags) {
+    public List<String> recommendPostBasedOnTags(String userId, Set<String> tags) {
         return postNodeRespository.recommendPostBasedOnUserInterests(userId, tags);
     }
 
-    public List<ObjectId> recommendPostBasedOnConnectionsAndTags(String userId, Set<String> tags) {
+    public List<String> recommendPostBasedOnConnectionsAndTags(String userId, Set<String> tags) {
         return postNodeRespository.recommendPostBasedOnUserFollowsAndInterests(userId, tags);
 
     }
@@ -106,7 +111,7 @@ public class Neo4jService {
         projectNodeRepository.unsubscribeRelation(userId, projectId);
     }
 
-    public Optional<PostNode> getPostById(ObjectId postId) {
+    public Optional<PostNode> getPostById(String postId) {
         return postNodeRespository.findById(postId);
     }
 

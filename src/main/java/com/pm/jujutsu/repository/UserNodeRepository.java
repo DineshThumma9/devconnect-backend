@@ -2,7 +2,6 @@ package com.pm.jujutsu.repository;
 
 
 import com.pm.jujutsu.model.UserNode;
-import org.bson.types.ObjectId;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;
@@ -11,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public interface UserNodeRepository  extends Neo4jRepository<UserNode, ObjectId>{
+public interface UserNodeRepository  extends Neo4jRepository<UserNode, String>{
 
 
     @Query("MATCH (u:User {id:$userId) (f:User {id:$fId} " +
@@ -37,7 +36,7 @@ public interface UserNodeRepository  extends Neo4jRepository<UserNode, ObjectId>
             
             """)
     void syncUserTags(
-            ObjectId userId,
+            String userId,
             Set<String> tags
     );
 

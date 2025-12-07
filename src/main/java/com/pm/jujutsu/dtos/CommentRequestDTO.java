@@ -7,6 +7,12 @@ import lombok.Data;
 @Data
 public class CommentRequestDTO {
 
+
+
+    @NotBlank
+    @NotNull
+    private String username;
+
     @NotNull
     @NotBlank
     private String comment;

@@ -4,11 +4,8 @@ import com.pm.jujutsu.dtos.LoginRequestDTO;
 import com.pm.jujutsu.dtos.LoginResponseDTO;
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
-import com.pm.jujutsu.model.User;
 import com.pm.jujutsu.service.AuthService;
-import com.pm.jujutsu.service.AzureBlobService;
 import com.pm.jujutsu.service.UserService;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,22 +14,18 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 @RequestMapping("/auth")
 @RestController
 public class AuthController {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(AuthController.class);
     @Autowired
     private AuthService authService;
 
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private AzureBlobService azureBlobService;
 
 
     Logger logger  = Logger.getLogger("auth");
@@ -72,10 +65,10 @@ public class AuthController {
             @RequestPart(value = "profilePic", required = false) MultipartFile profilePic
     ) throws IOException {
 
-        if (profilePic != null && !profilePic.isEmpty()) {
-            String profilePicUrl = azureBlobService.uploadFile(profilePic);
-            userRequestDTO.setProfile_pic(profilePicUrl);
-        }
+//        if (profilePic != null && !profilePic.isEmpty()) {
+//            String profilePicUrl = azureBlobService.uploadFile(profilePic);
+//            userRequestDTO.setProfilePicUrl(profilePicUrl);
+//        }
 
         UserResponseDTO user = userService.createUser(userRequestDTO);
 

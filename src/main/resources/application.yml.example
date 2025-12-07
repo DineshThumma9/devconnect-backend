@@ -7,16 +7,16 @@ spring:
       client:
         registration:
           google:
-            client-id: 48755-dmheoup4s98e.apps.googleusercontent.com
-            client-secret: GOCDDPdnk
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             scope:
               - profile
               - email
             redirect-uri: http://localhost:8080/login/oauth2/code/google
 
           github:
-            client-id: O84Hq
-            client-secret: 18da367461c4
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
             scope:
               - read:user
               - user:email
@@ -30,6 +30,12 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb+srv://dineshthumma15:vhaoHH0O8rD7EBZy@duct.lsgqe.mongodb.net/jujutsudb?retryWrites=true&w=majority&appName=duct
+      uri: ${MONGODB_URI}
       auto-index-creation: true
       database: jujutsudb
+
+# Neo4j Configuration
+neo4j:
+  uri: ${NEO4J_URI:bolt://localhost:7687}
+  username: ${NEO4J_USERNAME:neo4j}
+  password: ${NEO4J_PASSWORD:password}

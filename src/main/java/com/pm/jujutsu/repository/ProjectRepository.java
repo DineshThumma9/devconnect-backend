@@ -1,7 +1,6 @@
 package com.pm.jujutsu.repository;
 
 
-import com.pm.jujutsu.dtos.ProjectResponseDTO;
 import com.pm.jujutsu.model.Project;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -27,5 +26,5 @@ public  interface ProjectRepository extends MongoRepository<Project, ObjectId> {
 
 
 
-    List<Project> findAllByCurrentContributers();
+    List<Project> findAllByCurrentContributorIds(ObjectId userId);
 }

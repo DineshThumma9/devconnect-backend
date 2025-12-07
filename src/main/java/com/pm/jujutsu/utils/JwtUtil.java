@@ -1,7 +1,6 @@
 
 package com.pm.jujutsu.utils;
 
-import com.pm.jujutsu.exceptions.BadRequestException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.model.User;
 import com.pm.jujutsu.repository.UserRepository;
@@ -20,7 +19,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Base64;

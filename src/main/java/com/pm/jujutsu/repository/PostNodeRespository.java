@@ -1,7 +1,6 @@
 package com.pm.jujutsu.repository;
 
 import com.pm.jujutsu.model.PostNode;
-import org.bson.types.ObjectId;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;
@@ -11,7 +10,7 @@ import java.util.Set;
 
 
 @Repository
-public interface PostNodeRespository extends Neo4jRepository<PostNode, ObjectId> {
+public interface PostNodeRespository extends Neo4jRepository<PostNode, String> {
 
 
     @Query("MATCH (u:User {id:$userId}) (p:Post {id:$postId} MERGE (p) <- [:LIKED_BY] - (u)")
@@ -33,7 +32,7 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, ObjectId>
             MATCH (p:Post {id: $postId})
             MERGE (p)-[TAGGED_WITH]->(t)
             """)
-    void syncPostTags(ObjectId postId, Set<String> tags);
+    void syncPostTags(String postId, Set<String> tags);
 
 
     @Query("""
@@ -44,7 +43,7 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, ObjectId>
                            ORDER BY p.timestamp DESC
                            LIMIT 20
             """)
-    List<ObjectId> recommendPostBasedOnUserInterests(ObjectId userId, Set<String> tags);
+    List<String> recommendPostBasedOnUserInterests(String userId, Set<String> tags);
 
 
 
@@ -59,7 +58,7 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, ObjectId>
             LIMIT 20
           
           """)
-    List<ObjectId> recommendPostBasedOnUserFollowsAndInterests(String userId,Set<String> tags);
+    List<String> recommendPostBasedOnUserFollowsAndInterests(String userId,Set<String> tags);
 
 
 

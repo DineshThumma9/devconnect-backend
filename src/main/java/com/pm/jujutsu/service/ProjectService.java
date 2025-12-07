@@ -6,21 +6,19 @@ import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.ProjectMapper;
 import com.pm.jujutsu.model.*;
+import com.pm.jujutsu.repository.ProjectNodeRepository;
 import com.pm.jujutsu.repository.ProjectRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.nodes.Tag;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
+import java.util.Set;
 @Service
 public class ProjectService {
 
@@ -36,6 +34,8 @@ public class ProjectService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private ProjectNodeRepository projectNodeRepository;
 
     @Autowired
     private Neo4jService neo4jService;
@@ -47,13 +47,14 @@ public class ProjectService {
 
         Project project = projectMapper.toEntity(projectRequestDTO);
         project.setOwnerId(currentUserId);
-        ProjectNode projectNode = new ProjectNode();
-        projectNode.setId(project.getId());
-        projectNode.setOwner(project.getOwnerId());
-
-        neo4jService.syncProjectTags(project.getId(),project.getTechRequirements());
-
         Project savedProject = projectRepository.save(project);
+        
+        // Create and save ProjectNode in Neo4j
+        ProjectNode projectNode = new ProjectNode();
+        projectNode.setId(savedProject.getId().toHexString());
+        projectNode.setOwner(neo4jService.getUserById(savedProject.getOwnerId().toHexString()).get());
+        projectNodeRepository.save(projectNode);
+        neo4jService.syncProjectTags(savedProject.getId().toHexString(), savedProject.getTechRequirements());
         return enrichProjectResponse(savedProject);
     }
 
@@ -104,7 +105,6 @@ public class ProjectService {
 
 
 
-    // Helper method to reduce code duplication
     private ProjectResponseDTO enrichProjectResponse(Project project) {
         ProjectResponseDTO responseDTO = projectMapper.toResponseEntity(project);
 
@@ -116,25 +116,15 @@ public class ProjectService {
 
             // Add current contributors
             if (project.getCurrentContributorIds() != null && !project.getCurrentContributorIds().isEmpty()) {
-                List<String> currentContributorNames = project.getCurrentContributorIds().stream()
+                Set<String> currentContributorNames = project.getCurrentContributorIds().stream()
                         .filter(id -> id != null)
                         .map(id -> userRepository.findById(id))
                         .filter(Optional::isPresent)
                         .map(user -> user.get().getUsername())
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toSet());
                 responseDTO.setCurrentContributors(currentContributorNames);
             }
 
-            // Add past contributors
-            if (project.getPastContributorIds() != null && !project.getPastContributorIds().isEmpty()) {
-                List<String> pastContributorNames = project.getPastContributorIds().stream()
-                        .filter(id -> id != null)
-                        .map(id -> userRepository.findById(id))
-                        .filter(Optional::isPresent)
-                        .map(user -> user.get().getUsername())
-                        .collect(Collectors.toList());
-                responseDTO.setPastContributors(pastContributorNames);
-            }
         }
 
         return responseDTO;
@@ -153,13 +143,13 @@ public class ProjectService {
             return false;
 
         }
-        List<Project> projectList = user.get().getSubscribedProjects();
+        List<Project> projectList = projectRepository.findAllById(user.get().getSubscribedProjectIds());
         Optional<Project> project = projectRepository.findById(objectProjectId);
         if(project.isEmpty()){
             throw new NotFoundException("Project is Empty");
         }
         projectList.add(project.get());
-        neo4jService.createSubscibeRelationship(projectId,userId);
+        neo4jService.subscribeToProject(userId,projectId);
         return true;
 
 
@@ -178,13 +168,13 @@ public class ProjectService {
             return false;
 
         }
-        List<Project> projectList = user.get().getSubscribedProjects();
+        List<Project> projectList = projectRepository.findAllById(user.get().getSubscribedProjectIds());
         Optional<Project> project = projectRepository.findById(objectProjectId);
         if(project.isEmpty()){
             throw new NotFoundException("Project is Empty");
         }
         projectList.remove(project.get());
-        neo4jService.removeSubscribeRelationship(projectId,userId);
+        neo4jService.unsubscribeFromProject(userId,projectId);
         return true;
 
 
@@ -195,23 +185,24 @@ public class ProjectService {
 
 
 
-    public List<ProjectResponseDTO> searchForProject(
-            String projectTitle,
-            String projectDesc,
-            List<String> tags,
-            String userId
-    ){
+    // public List<ProjectResponseDTO> searchForProject(
+    //         String projectTitle,
+    //         String projectDesc,
+    //         List<String> tags,
+    //         String userId
+    // ){
 
-    // TODO
-
-
+    // // TODO
 
 
-    }
+
+
+    // }
 
 
     public List<ProjectResponseDTO> getTrendingProjects(){
-        List<Project> projects =projectRepository.findAllByCurrentContributers();
+        ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
+        List<Project> projects = projectRepository.findAllByCurrentContributorIds(currentUserId);
         return projects.stream().map(projectMapper::toResponseEntity).toList();
 
 

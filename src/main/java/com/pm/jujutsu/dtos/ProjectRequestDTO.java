@@ -3,17 +3,17 @@ package com.pm.jujutsu.dtos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Data
-@Getter
-@Setter
 public class ProjectRequestDTO {
+
+
+
+    /*
+     Same problem as above shoy
+    */
 
 
     @NotNull
@@ -30,7 +30,7 @@ public class ProjectRequestDTO {
     @NotNull
     private Set<String> techRequirements = new HashSet<>();
 
-    private boolean isPrivate;  // optional: default false
+    private boolean isPrivate = false;  // optional: default false
 
     private String githubLink;  // optional
 

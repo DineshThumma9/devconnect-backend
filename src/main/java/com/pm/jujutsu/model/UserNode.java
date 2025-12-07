@@ -2,14 +2,12 @@ package com.pm.jujutsu.model;
 
 
 import lombok.Data;
-import org.bson.types.ObjectId;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Node("User")
@@ -17,7 +15,7 @@ import java.util.Set;
 public class UserNode {
 
     @Id
-    private ObjectId id;
+    private String id;
 
     @Relationship(type = "INTERESTED_IN", direction = Relationship.Direction.OUTGOING)
     private Set<TagNode> interestedIn = new HashSet<>();

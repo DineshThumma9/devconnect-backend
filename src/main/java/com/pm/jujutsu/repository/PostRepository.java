@@ -1,7 +1,6 @@
 package com.pm.jujutsu.repository;
 
 
-import com.pm.jujutsu.dtos.PostResponseDTO;
 import com.pm.jujutsu.model.Post;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;

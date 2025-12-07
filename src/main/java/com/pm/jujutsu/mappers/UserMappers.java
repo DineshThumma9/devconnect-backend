@@ -12,9 +12,17 @@ import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface UserMappers {
+     @Mapping(target = "id", ignore = true)
+     @Mapping(target = "hashedPassword", ignore = true)
+     @Mapping(target = "followerIds", ignore = true)
+     @Mapping(target = "followingIds", ignore = true)
+     @Mapping(target = "subscribedProjectIds", ignore = true)
      User toEntity(UserRequestDTO userRequestDTO);
 
      @Mapping(source = "id", target = "id", qualifiedByName = "objectIdToString")
+     @Mapping(target = "followers", ignore = true)
+     @Mapping(target = "followings", ignore = true)
+     @Mapping(target = "subscribedProjects", ignore = true)
      UserResponseDTO toResponseEntity(User user);
 
      @Named("objectIdToString")

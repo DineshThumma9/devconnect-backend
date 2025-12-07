@@ -29,6 +29,12 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getProject(projectId));
     }
 
+
+
+    /*
+    Should i make PostMapping with a query mapping with projectID frontend will randomly generate
+    UUID that backend will save 
+     */
     @PostMapping
     public ResponseEntity<ProjectResponseDTO> createProject(
             @Valid @RequestBody ProjectRequestDTO projectRequestDTO) {

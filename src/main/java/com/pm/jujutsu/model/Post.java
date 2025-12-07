@@ -27,13 +27,13 @@ public class Post {
     private String content;
 
     @CreatedDate
-    private Date createdAt;
+    private Date createdAt = new Date();
 
 
-    private Set<String> tags;
+    private Set<String> tags = new HashSet<>();
 
     @LastModifiedDate
-    private Date updatedAt;
+    private Date updatedAt = new Date();
 
     private String[] media;
 
@@ -44,11 +44,7 @@ public class Post {
 
 
     private int likes = 0;
-
-
     private int commentsCount = 0;
-
-
     private int shares = 0;
 
 

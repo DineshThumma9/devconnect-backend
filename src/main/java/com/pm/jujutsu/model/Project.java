@@ -8,10 +8,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Data
@@ -47,16 +45,17 @@ public class Project {
 
 
     @NotNull
-    private String status;  // e.g., "active", "completed"
+    private String status = "active";  // e.g., "active", "completed"
 
 
     private String githubLink;
 
+    private String[] media;
 
 
 
     @CreatedDate
-    private LocalDateTime createdAt;
+    private Date createdAt = new Date();
 
 
 }

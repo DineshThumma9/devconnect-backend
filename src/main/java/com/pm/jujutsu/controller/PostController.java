@@ -20,13 +20,13 @@ public class PostController {
     public PostService postService;
 
 
-    @GetMapping("/{postId}")
+    @GetMapping("/{username}")
     public ResponseEntity<PostResponseDTO> getPost(
-            @PathVariable String postId
+            @PathVariable String username
     ) {
 
 
-        PostResponseDTO post = postService.getPost(postId);
+        PostResponseDTO post = postService.getPost(username);
         return post != null ? ResponseEntity.ok(post) : ResponseEntity.notFound().build();
 
     }
@@ -36,31 +36,32 @@ public class PostController {
     public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO postRequestDTO) {
 
 
+
         return ResponseEntity.ok(postService.createPost(postRequestDTO));
 
     }
 
 
-    @PutMapping("/{postId}")
+    @PutMapping("/{username}")
     public ResponseEntity<PostResponseDTO> updatePost(
-            @PathVariable("postId") String postId,
+            @PathVariable("username") String username,
             @RequestBody PostRequestDTO postRequestDTO
 
     ) {
 
-        return ResponseEntity.ok(postService.updatePost(postRequestDTO, postId));
+        return ResponseEntity.ok(postService.updatePost(postRequestDTO, username));
 
 
     }
 
 
-    @DeleteMapping("/{postId}")
+    @DeleteMapping("/{username}")
     public ResponseEntity<Void> deletePost(
-            @PathVariable("postId") String postId
+            @PathVariable("username") String username
     ) {
 
 
-        return postService.deletePost(postId) ?
+        return postService.deletePost(username) ?
                 ResponseEntity.ok().build() :
                 ResponseEntity.notFound().build();
 
@@ -104,12 +105,12 @@ public class PostController {
 
     }
 
-    @PutMapping("/share/{postId}")
+    @PutMapping("/share/{username}")
     public ResponseEntity<Void> share(
-            @PathVariable("postId") String postId
+            @PathVariable("username") String username
     ) {
 
-        return postService.shareAPost(postId) ?
+        return postService.shareAPost(username) ?
                 ResponseEntity.ok().build() :
                 ResponseEntity.notFound().build();
 

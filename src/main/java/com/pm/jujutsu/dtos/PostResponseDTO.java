@@ -23,7 +23,7 @@ public class PostResponseDTO {
     private Date createdAt;
     private Date updatedAt;
     private int likes;
-    private int comments;
+    private Set<CommentResponseDTO> comments = new HashSet<>();
     private int shares;
     private String[] media;
     private Set<String> tags = new HashSet<>();

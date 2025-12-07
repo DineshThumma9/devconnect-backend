@@ -6,24 +6,18 @@ import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.PostMapper;
 import com.pm.jujutsu.model.*;
+import com.pm.jujutsu.repository.PostNodeRespository;
 import com.pm.jujutsu.repository.PostRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.bson.types.ObjectId;
-import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.neo4j.core.Neo4jClient;
-import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.stereotype.Service;
 
-import java.beans.Transient;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 public class PostService {
@@ -40,6 +34,8 @@ public class PostService {
     @Autowired
     public JwtUtil jwtUtil;
 
+    @Autowired
+    public PostNodeRespository postNodeRepository;
 
     @Autowired
     public Neo4jService neo4jService;
@@ -53,11 +49,12 @@ public class PostService {
         Post post = postMapper.toEntity(postRequestDTO);
         post.setOwnerId(currentUserId); // Ensure the post is owned by current user
         Post savedPost = postRepository.save(post);
+        
+        // Create and save PostNode in Neo4j
         PostNode postNode = new PostNode();
-        postNode.setId(post.getId());
-        neo4jService.syncPostTags(postNode.getId(),  post.getTags());
-
-
+        postNode.setId(post.getId().toHexString());
+        postNodeRepository.save(postNode);
+        neo4jService.syncPostTags(post.getId().toHexString(),  post.getTags());
 
         PostResponseDTO responseDTO = postMapper.toResponseEntity(savedPost);
 
@@ -84,13 +81,6 @@ public class PostService {
 
         post.setTitle(postRequestDTO.getTitle());
         post.setContent(postRequestDTO.getContent());
-
-        Optional<PostNode> postNode = neo4jService.getPostById(objectId);
-
-
-
-
-
 
         Post savedPost = postRepository.save(post);
         PostResponseDTO responseDTO = postMapper.toResponseEntity(savedPost);
@@ -191,7 +181,7 @@ public class PostService {
 
         Post post1 = post.get();
         Comment comment1 = new Comment();
-        comment1.setPostId(postId);
+        comment1.setPostId(postObjectId);
         comment1.setUserId(userObjectId);
         comment1.setComment(comment);
 
@@ -234,23 +224,25 @@ public class PostService {
         }
 
         User user = userOpt.get();
-        List<ObjectId> recommendPosts =
-                neo4jService.recommendPostBasedOnTags(jwtUtil.getCurrentUser().getId(),user.getInterests());
+        List<String> recommendPosts =
+                neo4jService.recommendPostBasedOnTags(jwtUtil.getCurrentUser().getId().toHexString(), user.getInterests());
 
 
-        List<ObjectId> recommendPostFromConnections =
-                neo4jService.recommendPostBasedOnConnectionsAndTags(String.valueOf(jwtUtil.getCurrentUser().getId()), user.getInterests());
+        List<String> recommendPostFromConnections =
+                neo4jService.recommendPostBasedOnConnectionsAndTags(jwtUtil.getCurrentUser().getId().toHexString(), user.getInterests());
 
 
 
         recommendPosts.addAll(recommendPostFromConnections);
-        List<ObjectId> uniqueUserIds = recommendPosts.stream().distinct().toList();
+        List<String> uniquePostIds = recommendPosts.stream().distinct().toList();
 
-
-
+        // Convert String IDs to ObjectIds
+        List<ObjectId> objectIds = uniquePostIds.stream()
+                .map(ObjectId::new)
+                .toList();
 
         // Fetch users from repository
-        List<Post> posts = postRepository.findAllById(uniqueUserIds).stream()
+        List<Post> posts = postRepository.findAllById(objectIds).stream()
                 .toList();
 
 

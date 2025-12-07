@@ -2,7 +2,6 @@ package com.pm.jujutsu.repository;
 
 
 import com.pm.jujutsu.model.ProjectNode;
-import org.bson.types.ObjectId;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;
@@ -11,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, ObjectId> {
+public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, String> {
 
 
 
@@ -34,7 +33,7 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Obje
             
             """)
     void syncProjectTags(
-            ObjectId projectId,
+            String projectId,
             Set<String> tags
 
     );

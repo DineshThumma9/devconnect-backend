@@ -3,7 +3,6 @@ package com.pm.jujutsu.controller;
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
 import com.pm.jujutsu.mappers.UserMappers;
-import com.pm.jujutsu.service.AzureBlobService;
 import com.pm.jujutsu.service.Neo4jService;
 import com.pm.jujutsu.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -26,16 +23,13 @@ public class UserController {
     @Autowired
     public UserMappers userMappers;
 
-    @Autowired
-    public AzureBlobService azureBlobService;
-
 
     @Autowired
     public Neo4jService neo4jService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> getUser(@PathVariable String id) {
-        return ResponseEntity.ok().body(userService.getUser(id));
+    @GetMapping("/{username}")
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable String username) {
+        return ResponseEntity.ok().body(userService.getUser(username));
     }
 
     @PostMapping("/create-user")
@@ -49,49 +43,48 @@ public class UserController {
         return ResponseEntity.ok().body(userService.updateUser(user));
     }
 
-    @PostMapping("/upload-profile-picture")
-    public ResponseEntity<String> uploadProfilePicture(@RequestParam("file") MultipartFile file) throws IOException {
-        String profileUrl = azureBlobService.uploadFile(file);
-        UserResponseDTO updatedUser = userService.updateProfilePicture(file);
-        return ResponseEntity.ok(profileUrl);
-    }
+//    @PostMapping("/upload-profile-picture")
+//    public ResponseEntity<UserResponseDTO> uploadProfilePicture(@RequestParam("file") MultipartFile file) throws IOException {
+//        UserResponseDTO updatedUser = userService.updateProfilePicture(file);
+//        return ResponseEntity.ok(updatedUser);
+//    }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
-        userService.deleteUser(id);
+    @DeleteMapping("/{username}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String username) {
+        userService.deleteUser(username);
         return ResponseEntity.ok().build();
     }
 
 
     @PostMapping("/interests")
-    public ResponseEntity<Void> userIntersets(@RequestBody UserRequestDTO user, @RequestBody String userId) {
-        userService.updateUser(user);
-        neo4jService.syncUserTags(userId, user.interests);
+    public ResponseEntity<Void> userInterests(@RequestBody UserRequestDTO user) {
+        UserResponseDTO updatedUser = userService.updateUser(user);
+        neo4jService.syncUserTags(updatedUser.getId(), user.interests);
         return ResponseEntity.ok().build();
     }
 
 
-    @PutMapping("/follow/{userId}")
+    @PutMapping("/follow/{username}")
     public ResponseEntity<Void> followUser(
-            @PathVariable("userId") String userId,
+            @PathVariable("username") String username,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
 
-        return userService.addFollower(userId, userDetails.getUsername()) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        return userService.addFollower(username, userDetails.getUsername()) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
 
-    @PutMapping("/unfollow/{userId}")
+    @PutMapping("/unfollow/{username}")
     public ResponseEntity<Void> unFollowUser(
-            @PathVariable("userId") String userId,
+            @PathVariable("username") String username,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
 
-        return userService.removeFollower(userId, userDetails.getUsername()) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        return userService.removeFollower(username, userDetails.getUsername()) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
 
-    @GetMapping("/{userId}/suggested-connections")
+    @GetMapping("/{username}/suggested-connections")
     public ResponseEntity<List<UserResponseDTO>> suggestedConnection(
             @AuthenticationPrincipal UserDetails userDetails
     ) {

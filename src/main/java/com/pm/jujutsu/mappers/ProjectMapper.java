@@ -16,13 +16,19 @@ public interface ProjectMapper {
 
     @Mapping(source = "id", target = "id", qualifiedByName = "objectIdToString")
     @Mapping(target = "currentContributors", ignore = true)
-    @Mapping(target = "pastContributors", ignore = true)
     @Mapping(target = "ownerUsername", ignore = true)
     @Mapping(target = "ownerProfilePicUrl", ignore = true)
+    @Mapping(target = "media", ignore = true)
     @Mapping(source = "ownerId", target = "ownerId", qualifiedByName = "objectIdToString")
     ProjectResponseDTO toResponseEntity(Project project);
 
     @Mapping(source = "ownerId", target = "ownerId", qualifiedByName = "stringToObjectId")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "currentContributorIds", ignore = true)
+    @Mapping(target = "pastContributorIds", ignore = true)
+    @Mapping(target = "status", constant = "active")
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "media", ignore = true)
     Project toEntity(ProjectRequestDTO project);
 
     @Named("objectIdToString")

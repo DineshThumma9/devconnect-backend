@@ -32,15 +32,14 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
-    @NotNull
     @Indexed(unique = true)
     private String username;
 
-    @NotNull
-    private String hashedPassword;
+    private String hashedPassword; // Optional for OAuth users
 
-    @NotNull
     private String profilePicUrl;
+
+    private String provider; // OAuth2 provider (google, github, etc.)
 
     private Set<ObjectId> followerIds = new HashSet<>();
     private Set<ObjectId> followingIds = new HashSet<>();

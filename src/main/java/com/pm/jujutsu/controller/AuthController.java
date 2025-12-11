@@ -91,4 +91,9 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
     }
 
+    @GetMapping("/oauth2/login")
+    public ResponseEntity<String> oauth2Login() {
+        return ResponseEntity.ok("Redirect to OAuth2 provider. Use /oauth2/authorization/google or /oauth2/authorization/github");
+    }
+
 }

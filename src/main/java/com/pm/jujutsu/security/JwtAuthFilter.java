@@ -31,6 +31,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
+        // Skip JWT validation for auth endpoints
+        String path = request.getRequestURI();
+        if (path.startsWith("/auth/") || path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         final String authHeader = request.getHeader("Authorization");
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -55,7 +62,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             // Invalid token, continue without authentication
-            throw  new NotFoundException("Auth not found");
+            // Don't throw exception - let Spring Security handle authorization
         }
         
         filterChain.doFilter(request, response);

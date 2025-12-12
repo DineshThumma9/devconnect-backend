@@ -4,7 +4,6 @@ package com.pm.jujutsu.model;
 import lombok.Data;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
 
 
 import java.util.HashSet;
@@ -16,16 +15,10 @@ public class UserNode {
 
     @Id
     private String id;
+    
+    @org.springframework.data.annotation.Version
+    private Long version;
 
-    @Relationship(type = "INTERESTED_IN", direction = Relationship.Direction.OUTGOING)
-    private Set<TagNode> interestedIn = new HashSet<>();
-
-    @Relationship(type = "FOLLOWS", direction = Relationship.Direction.OUTGOING)
-    private Set<UserNode> follows = new HashSet<>();
-
-    @Relationship(type = "FOLLOWED_BY", direction = Relationship.Direction.INCOMING)
-    private Set<UserNode> followedBy = new HashSet<>();
-
-    @Relationship(type = "SUBSCRIBED_TO", direction = Relationship.Direction.OUTGOING)
-    private Set<ProjectNode> subscribedProjects = new HashSet<>();
+    // Relationships managed manually via Neo4jService to avoid cascade version conflicts
+    // Don't set these fields directly - use Neo4jService relationship methods instead
 }

@@ -30,7 +30,7 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, String> {
             MERGE (t:Tag {name: tagName})
             WITH t
             MATCH (p:Post {id: $postId})
-            MERGE (p)-[TAGGED_WITH]->(t)
+            MERGE (p)-[:TAGGED_WITH]->(t)
             """)
     void syncPostTags(String postId, Set<String> tags);
 

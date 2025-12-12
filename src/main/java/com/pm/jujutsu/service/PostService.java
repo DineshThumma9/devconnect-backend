@@ -50,11 +50,11 @@ public class PostService {
         post.setOwnerId(currentUserId); // Ensure the post is owned by current user
         Post savedPost = postRepository.save(post);
         
-        // Create and save PostNode in Neo4j
-        PostNode postNode = new PostNode();
-        postNode.setId(post.getId().toHexString());
-        postNodeRepository.save(postNode);
-        neo4jService.syncPostTags(post.getId().toHexString(),  post.getTags());
+        // Create PostNode in Neo4j (without relationships)
+        neo4jService.createPostNode(post.getId().toHexString());
+        
+        // Sync tags
+        neo4jService.syncPostTags(post.getId().toHexString(), post.getTags());
 
         PostResponseDTO responseDTO = postMapper.toResponseEntity(savedPost);
 
@@ -252,5 +252,16 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+
+
+    public List<PostResponseDTO> getPostsByUserId(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        ObjectId objectId = user.getId();
+        List<Post> posts = postRepository.findAll().stream()
+                .filter(post -> post.getOwnerId().equals(objectId))
+                .toList();
+        return posts.stream().map(postMapper::toResponseEntity).toList();
+    }
 
 }

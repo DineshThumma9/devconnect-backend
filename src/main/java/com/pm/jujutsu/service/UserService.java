@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -225,6 +226,46 @@ public class UserService {
 
 
         return users.stream()
+                .map(userMappers::toResponseEntity)
+                .collect(Collectors.toList());
+    }
+
+
+
+    public List<UserResponseDTO> getFollowers(String userId){
+        ObjectId objectId = new ObjectId(userId);
+        Optional<User> userOpt = userRepository.findById(objectId);
+
+        if(userOpt.isEmpty()){
+            return List.of();
+        }
+
+        User user = userOpt.get();
+        Set<ObjectId> followerIds = user.getFollowerIds();
+
+        List<User> followers = StreamSupport.stream(userRepository.findAllById(followerIds).spliterator(), false)
+                .collect(Collectors.toList());
+
+        return followers.stream()
+                .map(userMappers::toResponseEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<UserResponseDTO> getFollowings(String userId){
+        ObjectId objectId = new ObjectId(userId);
+        Optional<User> userOpt = userRepository.findById(objectId);
+
+        if(userOpt.isEmpty()){
+            return List.of();
+        }
+
+        User user = userOpt.get();
+        Set<ObjectId> followingIds = user.getFollowingIds();
+
+        List<User> followings = StreamSupport.stream(userRepository.findAllById(followingIds).spliterator(), false)
+                .collect(Collectors.toList());
+
+        return followings.stream()
                 .map(userMappers::toResponseEntity)
                 .collect(Collectors.toList());
     }

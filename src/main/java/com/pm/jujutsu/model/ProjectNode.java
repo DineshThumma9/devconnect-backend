@@ -15,16 +15,13 @@ public class ProjectNode {
 
     @Id
     private String id;
+    
+    @org.springframework.data.annotation.Version
+    private Long version;
 
     private String title;
     private String description;
 
-    @Relationship(type = "OWNED_BY", direction = Relationship.Direction.INCOMING)
-    private UserNode owner;
-
-    @Relationship(type = "CONTRIBUTING_TO", direction = Relationship.Direction.INCOMING)
-    private Set<UserNode> currentContributors = new HashSet<>();
-
-    @Relationship(type = "WORKS_WITH", direction = Relationship.Direction.OUTGOING)
-    private Set<TagNode> tags = new HashSet<>();
+    // Relationships managed manually via Neo4jService to avoid cascade version conflicts
+    // Don't set these fields directly - use Neo4jService relationship methods instead
 }

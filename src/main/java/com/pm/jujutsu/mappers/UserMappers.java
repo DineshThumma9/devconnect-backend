@@ -17,6 +17,7 @@ public interface UserMappers {
      @Mapping(target = "followerIds", ignore = true)
      @Mapping(target = "followingIds", ignore = true)
      @Mapping(target = "subscribedProjectIds", ignore = true)
+     @Mapping(target = "provider", ignore = true)
      User toEntity(UserRequestDTO userRequestDTO);
 
      @Mapping(source = "id", target = "id", qualifiedByName = "objectIdToString")

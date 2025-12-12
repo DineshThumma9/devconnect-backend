@@ -49,12 +49,22 @@ public class ProjectService {
         project.setOwnerId(currentUserId);
         Project savedProject = projectRepository.save(project);
         
-        // Create and save ProjectNode in Neo4j
-        ProjectNode projectNode = new ProjectNode();
-        projectNode.setId(savedProject.getId().toHexString());
-        projectNode.setOwner(neo4jService.getUserById(savedProject.getOwnerId().toHexString()).get());
-        projectNodeRepository.save(projectNode);
+        // Create ProjectNode in Neo4j (without relationships)
+        neo4jService.createProjectNode(
+            savedProject.getId().toHexString(),
+            savedProject.getTitle(),
+            savedProject.getDescription()
+        );
+        
+        // Create owner relationship separately
+        neo4jService.createProjectOwnerRelationship(
+            savedProject.getId().toHexString(),
+            savedProject.getOwnerId().toHexString()
+        );
+        
+        // Sync tags
         neo4jService.syncProjectTags(savedProject.getId().toHexString(), savedProject.getTechRequirements());
+        
         return enrichProjectResponse(savedProject);
     }
 
@@ -242,6 +252,26 @@ public class ProjectService {
                 .collect(Collectors.toList());
 
 
+    }
+
+
+
+    
+
+
+    public List<ProjectResponseDTO> getAllProjects(String email){
+
+
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new NotFoundException("User not found"));
+        
+        ObjectId userId = user.getId();
+        List<Project> projects = projectRepository.findAll();
+        return projects
+            .stream()
+            .filter(project -> project.getOwnerId().equals(userId))
+            .map(projectMapper::toResponseEntity)
+            .toList();
     }
 
 }

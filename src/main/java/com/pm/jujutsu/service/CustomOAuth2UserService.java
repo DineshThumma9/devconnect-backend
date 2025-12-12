@@ -14,9 +14,11 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final Neo4jService neo4jService;
 
-    CustomOAuth2UserService(UserRepository userRepository) {
+    CustomOAuth2UserService(UserRepository userRepository, Neo4jService neo4jService) {
         this.userRepository = userRepository;
+        this.neo4jService = neo4jService;
     }
 
     @Override
@@ -37,7 +39,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 newUser.setEmail(email);
                 newUser.setName(name != null ? name : email);
                 newUser.setProvider(provider);
-                userRepository.save(newUser);
+                User savedUser = userRepository.save(newUser);
+                
+                // Create corresponding Neo4j node for social graph
+                neo4jService.createUserNode(savedUser.getId().toHexString());
             }
         }
         

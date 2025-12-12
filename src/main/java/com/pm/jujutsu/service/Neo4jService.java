@@ -1,14 +1,17 @@
 package com.pm.jujutsu.service;
 
 import com.pm.jujutsu.model.PostNode;
+import com.pm.jujutsu.model.ProjectNode;
 import com.pm.jujutsu.repository.PostNodeRespository;
 import com.pm.jujutsu.repository.ProjectNodeRepository;
 import com.pm.jujutsu.repository.UserNodeRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.stereotype.Service;
 import com.pm.jujutsu.model.UserNode;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,7 +29,8 @@ public class Neo4jService {
     @Autowired
     private PostNodeRespository postNodeRespository;
 
-
+    @Autowired
+    private Neo4jTemplate neo4jTemplate;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -115,6 +119,55 @@ public class Neo4jService {
         return postNodeRespository.findById(postId);
     }
 
+    // ---------------- Node Creation (without relationships) ----------------
+    
+    public void createProjectNode(String projectId, String title, String description) {
+        ProjectNode projectNode = new ProjectNode();
+        projectNode.setId(projectId);
+        projectNode.setTitle(title);
+        projectNode.setDescription(description);
+        projectNodeRepository.save(projectNode);
+    }
+    
+    public void createPostNode(String postId) {
+        PostNode postNode = new PostNode();
+        postNode.setId(postId);
+        postNodeRespository.save(postNode);
+    }
 
+    // ---------------- Relationship Creation (manual, no cascade) ----------------
+    
+    /**
+     * Creates OWNED_BY relationship: (Project)<-[:OWNED_BY]-(User)
+     */
+    public void createProjectOwnerRelationship(String projectId, String userId) {
+        neo4jTemplate.execute(
+            "MATCH (p:Project {id: $projectId}), (u:User {id: $userId}) " +
+            "MERGE (p)<-[:OWNED_BY]-(u)",
+            Map.of("projectId", projectId, "userId", userId)
+        );
+    }
+    
+    /**
+     * Creates CONTRIBUTING_TO relationship: (Project)<-[:CONTRIBUTING_TO]-(User)
+     */
+    public void addProjectContributor(String projectId, String userId) {
+        neo4jTemplate.execute(
+            "MATCH (p:Project {id: $projectId}), (u:User {id: $userId}) " +
+            "MERGE (p)<-[:CONTRIBUTING_TO]-(u)",
+            Map.of("projectId", projectId, "userId", userId)
+        );
+    }
+    
+    /**
+     * Removes CONTRIBUTING_TO relationship
+     */
+    public void removeProjectContributor(String projectId, String userId) {
+        neo4jTemplate.execute(
+            "MATCH (p:Project {id: $projectId})<-[r:CONTRIBUTING_TO]-(u:User {id: $userId}) " +
+            "DELETE r",
+            Map.of("projectId", projectId, "userId", userId)
+        );
+    }
 
 }

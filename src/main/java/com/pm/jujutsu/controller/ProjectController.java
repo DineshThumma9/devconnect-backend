@@ -11,6 +11,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @RestController
@@ -35,7 +38,10 @@ public class ProjectController {
     Should i make PostMapping with a query mapping with projectID frontend will randomly generate
     UUID that backend will save 
      */
-    @PostMapping
+
+
+
+    @PostMapping("/create")
     public ResponseEntity<ProjectResponseDTO> createProject(
             @Valid @RequestBody ProjectRequestDTO projectRequestDTO) {
         return ResponseEntity.ok(projectService.createProject(projectRequestDTO));
@@ -83,4 +89,10 @@ public class ProjectController {
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(projectService.recommendProjects(userDetails.getUsername()));
     }
+
+    @GetMapping("/get-projects/{username}")
+    public List<ProjectResponseDTO>  getAllProjectsOfUser(@PathVariable String username) {
+        return projectService.getAllProjects(username);
+    }
+    
 }

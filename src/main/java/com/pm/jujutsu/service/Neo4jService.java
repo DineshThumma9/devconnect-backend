@@ -7,7 +7,7 @@ import com.pm.jujutsu.repository.ProjectNodeRepository;
 import com.pm.jujutsu.repository.UserNodeRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.neo4j.core.Neo4jTemplate;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 import com.pm.jujutsu.model.UserNode;
 import java.util.List;
@@ -30,7 +30,7 @@ public class Neo4jService {
     private PostNodeRespository postNodeRespository;
 
     @Autowired
-    private Neo4jTemplate neo4jTemplate;
+    private Neo4jClient neo4jClient;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -141,33 +141,38 @@ public class Neo4jService {
      * Creates OWNED_BY relationship: (Project)<-[:OWNED_BY]-(User)
      */
     public void createProjectOwnerRelationship(String projectId, String userId) {
-        neo4jTemplate.execute(
-            "MATCH (p:Project {id: $projectId}), (u:User {id: $userId}) " +
-            "MERGE (p)<-[:OWNED_BY]-(u)",
-            Map.of("projectId", projectId, "userId", userId)
-        );
+        neo4jClient.query(
+            "MATCH (p:Project {id: $projectId}) " +
+            "MATCH (u:User {id: $userId}) " +
+            "MERGE (p)<-[:OWNED_BY]-(u)"
+        )
+        .bindAll(Map.of("projectId", projectId, "userId", userId))
+        .run();
     }
     
     /**
      * Creates CONTRIBUTING_TO relationship: (Project)<-[:CONTRIBUTING_TO]-(User)
      */
     public void addProjectContributor(String projectId, String userId) {
-        neo4jTemplate.execute(
-            "MATCH (p:Project {id: $projectId}), (u:User {id: $userId}) " +
-            "MERGE (p)<-[:CONTRIBUTING_TO]-(u)",
-            Map.of("projectId", projectId, "userId", userId)
-        );
+        neo4jClient.query(
+            "MATCH (p:Project {id: $projectId}) " +
+            "MATCH (u:User {id: $userId}) " +
+            "MERGE (p)<-[:CONTRIBUTING_TO]-(u)"
+        )
+        .bindAll(Map.of("projectId", projectId, "userId", userId))
+        .run();
     }
     
     /**
      * Removes CONTRIBUTING_TO relationship
      */
     public void removeProjectContributor(String projectId, String userId) {
-        neo4jTemplate.execute(
+        neo4jClient.query(
             "MATCH (p:Project {id: $projectId})<-[r:CONTRIBUTING_TO]-(u:User {id: $userId}) " +
-            "DELETE r",
-            Map.of("projectId", projectId, "userId", userId)
-        );
+            "DELETE r"
+        )
+        .bindAll(Map.of("projectId", projectId, "userId", userId))
+        .run();
     }
 
 }

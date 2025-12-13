@@ -209,9 +209,19 @@ public class PostService {
 
     public List<PostResponseDTO> getTrendingPost() {
         List<Post> posts = postRepository.findAllByLikes();
-        return posts.stream().map(postMapper::toResponseEntity).toList();
-
-
+        
+        return posts.stream()
+                .map(post -> {
+                    PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
+                    // Set owner information
+                    Optional<User> owner = userRepository.findById(post.getOwnerId());
+                    if (owner.isPresent()) {
+                        responseDTO.setOwnerUsername(owner.get().getUsername());
+                        responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
+                    }
+                    return responseDTO;
+                })
+                .toList();
     }
 
 
@@ -248,7 +258,16 @@ public class PostService {
 
 
         return posts.stream()
-                .map(postMapper::toResponseEntity)
+                .map(post -> {
+                    PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
+                    // Set owner information
+                    Optional<User> owner = userRepository.findById(post.getOwnerId());
+                    if (owner.isPresent()) {
+                        responseDTO.setOwnerUsername(owner.get().getUsername());
+                        responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
+                    }
+                    return responseDTO;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -261,7 +280,16 @@ public class PostService {
         List<Post> posts = postRepository.findAll().stream()
                 .filter(post -> post.getOwnerId().equals(objectId))
                 .toList();
-        return posts.stream().map(postMapper::toResponseEntity).toList();
+        
+        return posts.stream()
+                .map(post -> {
+                    PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
+                    // Set owner information
+                    responseDTO.setOwnerUsername(user.getUsername());
+                    responseDTO.setOwnerProfilePicUrl(user.getProfilePicUrl());
+                    return responseDTO;
+                })
+                .toList();
     }
 
 }

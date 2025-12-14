@@ -14,7 +14,10 @@ import jakarta.transaction.Transactional;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,13 +44,24 @@ public class PostService {
     public Neo4jService neo4jService;
 
 
+    @Autowired
+    public SupabaseStorageService supabaseStorageService;
 
 
 
-    public PostResponseDTO createPost(PostRequestDTO postRequestDTO) {
+
+    public PostResponseDTO createPost(PostRequestDTO postRequestDTO, List<MultipartFile> images) throws IOException {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
         Post post = postMapper.toEntity(postRequestDTO);
         post.setOwnerId(currentUserId); // Ensure the post is owned by current user
+        
+        // Upload images if provided
+        if (images != null && !images.isEmpty()) {
+            List<String> mediaUrls = supabaseStorageService.uploadMultipleFiles(images, "posts");
+            post.setMedia(mediaUrls.toArray(new String[0]));
+        }
+
+
         Post savedPost = postRepository.save(post);
         
         // Create PostNode in Neo4j (without relationships)
@@ -62,6 +76,7 @@ public class PostService {
         if (owner.isPresent()) {
             responseDTO.setOwnerUsername(owner.get().getUsername());
             responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
+            
         }
 
         return responseDTO;

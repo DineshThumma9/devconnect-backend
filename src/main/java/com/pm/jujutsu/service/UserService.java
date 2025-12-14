@@ -2,6 +2,7 @@ package com.pm.jujutsu.service;
 
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
+import com.pm.jujutsu.exceptions.BadRequestException;
 import com.pm.jujutsu.exceptions.ConflictException;
 import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
@@ -16,7 +17,9 @@ import jakarta.transaction.Transactional;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,8 +41,8 @@ public class UserService {
     @Autowired
     private JwtUtil jwtUtils;
 
-  //  @Autowired
-   // private AzureBlobService azureBlobService;
+    @Autowired
+    private SupabaseStorageService supabaseStorageService;
 
 
 
@@ -69,6 +72,14 @@ public class UserService {
         // Create corresponding Neo4j node for social graph
         neo4jService.createUserNode(savedUser.getId().toHexString());
 
+        // Sync interests to Neo4j only if they exist
+        if (savedUser.getInterests() != null && !savedUser.getInterests().isEmpty()) {
+            neo4jService.createUserInterestsRelationship(
+                savedUser.getId().toHexString(), 
+                savedUser.getInterests()
+            );
+        }
+
         UserResponseDTO responseDTO = userMappers.toResponseEntity(savedUser);
         return responseDTO;
     }
@@ -87,52 +98,56 @@ public class UserService {
 
         updatedUser.setUsername(user.getUsername());
         updatedUser.setName(user.getName());
-
-
-//
-//        if (user.getProfilePicUrl() != null && !user.getProfilePicUrl().equals(updatedUser.getProfilePicUrl())) {
-//           // deleteOldProfilePicture(updatedUser.getProfilePicUrl());
-//           // updatedUser.setProfilePicUrl(user.getProfilePicUrl());
-//        }
+        
+        // Update interests if provided
+        if (user.getInterests() != null && !user.getInterests().isEmpty()) {
+            updatedUser.setInterests(user.getInterests());
+        }
 
         User newUser = userRepository.save(updatedUser);
+        
+        // Sync interests to Neo4j if they were updated
+        if (user.getInterests() != null && !user.getInterests().isEmpty()) {
+            neo4jService.syncUserTags(newUser.getId().toHexString(), user.getInterests());
+        }
+        
         return userMappers.toResponseEntity(newUser);
     }
 
-//    public UserResponseDTO updateProfilePicture(MultipartFile file) throws IOException {
-//        if (file.isEmpty()) {
-//            throw new BadRequestException("File cannot be empty");
-//        }
-//
-//        // Get current user
-//        User currentUser = userRepository.findById(jwtUtils.getCurrentUser().getId())
-//                .orElseThrow(() -> new NotFoundException("User not found"));
-//
-//        // Delete old profile picture if exists
-//        deleteOldProfilePicture(currentUser.getProfilePicUrl());
-//
-//        // Upload new profile picture to Azure Blob Storage
-//        String profilePicUrl = azureBlobService.uploadFile(file);
-//
-//        // Update user with new profile picture URL
-//        currentUser.setProfilePicUrl(profilePicUrl);
-//        User updatedUser = userRepository.save(currentUser);
-//
-//        return userMappers.toResponseEntity(updatedUser);
-//    }
+    public UserResponseDTO updateProfilePicture(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new BadRequestException("File cannot be empty");
+        }
 
-//    private void deleteOldProfilePicture(String profilePicUrl) {
-//        if (profilePicUrl != null && profilePicUrl.contains(azureBlobService.getBlobContainerUrl())) {
-//            try {
-//                // Extract filename from the URL
-//                String fileName = profilePicUrl.substring(profilePicUrl.lastIndexOf("/") + 1);
-//                azureBlobService.deleteFile(fileName);
-//            } catch (Exception e) {
-//                // Log error but don't halt execution
-//                System.err.println("Failed to delete old profile picture: " + e.getMessage());
-//            }
-//        }
-//    }
+        // Get current user
+        User currentUser = userRepository.findById(jwtUtils.getCurrentUser().getId())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // Delete old profile picture if exists
+        deleteOldProfilePicture(currentUser.getProfilePicUrl());
+
+        // Upload new profile picture to Supabase Storage
+        String profilePicUrl = supabaseStorageService.uploadFile(file);
+
+        // Update user with new profile picture URL
+        currentUser.setProfilePicUrl(profilePicUrl);
+        User updatedUser = userRepository.save(currentUser);
+
+        return userMappers.toResponseEntity(updatedUser);
+    }
+
+    private void deleteOldProfilePicture(String profilePicUrl) {
+        if (profilePicUrl != null && profilePicUrl.contains(supabaseStorageService.getBucketUrl())) {
+            try {
+                // Extract filename from the URL
+                String fileName = profilePicUrl.substring(profilePicUrl.lastIndexOf("/") + 1);
+                supabaseStorageService.deleteFile(fileName);
+            } catch (Exception e) {
+                // Log error but don't halt execution
+                System.err.println("Failed to delete old profile picture: " + e.getMessage());
+            }
+        }
+    }
 
     public UserResponseDTO getUser(String id) {
 
@@ -159,7 +174,7 @@ public class UserService {
 
 
         userNodeRepository.deleteById(targetUserId.toHexString());
-     //   deleteOldProfilePicture(userToDelete.getProfilePicUrl());
+        deleteOldProfilePicture(userToDelete.getProfilePicUrl());
         userRepository.delete(userToDelete);
 
     }

@@ -8,10 +8,10 @@ import com.pm.jujutsu.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -36,11 +36,14 @@ public class PostController {
 
 
     @PostMapping("/create")
-    public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO postRequestDTO) {
-
-
-
-        return ResponseEntity.ok(postService.createPost(postRequestDTO));
+    public ResponseEntity<PostResponseDTO> createPost(
+        @RequestPart("post") PostRequestDTO postRequestDTO,
+        @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) throws IOException {
+        return ResponseEntity.ok(postService.createPost(
+            postRequestDTO,
+            images
+        ));
 
     }
 

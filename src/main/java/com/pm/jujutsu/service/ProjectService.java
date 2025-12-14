@@ -13,7 +13,9 @@ import com.pm.jujutsu.utils.JwtUtil;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,14 +41,25 @@ public class ProjectService {
 
     @Autowired
     private Neo4jService neo4jService;
+    
 
 
+    @Autowired
+    private SupabaseStorageService supabaseStorageService;
 
-    public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO) {
+
+    public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO, List<MultipartFile> images) throws IOException {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
 
         Project project = projectMapper.toEntity(projectRequestDTO);
         project.setOwnerId(currentUserId);
+
+        // Upload images if provided
+        if (images != null && !images.isEmpty()) {
+            List<String> mediaUrls = supabaseStorageService.uploadMultipleFiles(images, "projects");
+            project.setMedia(mediaUrls.toArray(new String[0]));
+        }
+        
         Project savedProject = projectRepository.save(project);
         
         // Create ProjectNode in Neo4j (without relationships)

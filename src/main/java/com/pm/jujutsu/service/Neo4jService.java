@@ -149,7 +149,20 @@ public class Neo4jService {
         .bindAll(Map.of("projectId", projectId, "userId", userId))
         .run();
     }
+
+
+    public void createUserInterestsRelationship(String userId,Set<String> interests){
+        neo4jClient.query(
+            "MATCH (u:User {id: $userId}) " +
+            "UNWIND $interests AS tagName " +
+            "MERGE (t:Tag {name: tagName}) " +
+            "MERGE (u)-[:INTERESTED_IN]->(t)"
+        )
+        .bindAll(Map.of("userId", userId, "interests", interests))
+        .run();
+    }
     
+
     /**
      * Creates CONTRIBUTING_TO relationship: (Project)<-[:CONTRIBUTING_TO]-(User)
      */

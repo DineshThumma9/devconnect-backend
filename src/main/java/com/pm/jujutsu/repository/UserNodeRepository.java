@@ -28,12 +28,13 @@ public interface UserNodeRepository  extends Neo4jRepository<UserNode, String>{
 
 
     @Query("""
+            MATCH (u:User {id: $userId})
+            OPTIONAL MATCH (u)-[r:INTERESTED_IN]->()
+            DELETE r
+            WITH u
             UNWIND $tags AS tagName
             MERGE (t:Tag {name: tagName})
-            WITH t
-            MATCH (u:User {id: $userId})
             MERGE (u)-[:INTERESTED_IN]->(t)
-            
             """)
     void syncUserTags(
             String userId,

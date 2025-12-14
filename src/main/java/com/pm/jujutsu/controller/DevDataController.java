@@ -2,6 +2,7 @@ package com.pm.jujutsu.controller;
 
 import com.pm.jujutsu.dtos.*;
 import com.pm.jujutsu.model.*;
+import com.pm.jujutsu.utils.Encoder;
 import com.pm.jujutsu.utils.FakeDataGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,9 @@ public class DevDataController {
 
     @Autowired
     private FakeDataGenerator fakeDataGenerator;
+    
+    @Autowired
+    private Encoder encoder;
 
     @GetMapping("/fake-user")
     public ResponseEntity<Map<String, Object>> generateFakeUser() {
@@ -125,6 +129,22 @@ public class DevDataController {
         ));
         
         response.put("description", "Complete set of fake data for all models");
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/test-password")
+    public ResponseEntity<Map<String, Object>> testPassword(
+            @RequestParam String password,
+            @RequestParam String hash) {
+        Map<String, Object> response = new HashMap<>();
+        
+        boolean matches = encoder.matches(password, hash);
+        
+        response.put("password", password);
+        response.put("hash", hash);
+        response.put("matches", matches);
+        response.put("description", "Password verification test");
         
         return ResponseEntity.ok(response);
     }

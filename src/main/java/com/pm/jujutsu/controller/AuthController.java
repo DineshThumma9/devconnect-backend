@@ -5,6 +5,7 @@ import com.pm.jujutsu.dtos.LoginResponseDTO;
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
 import com.pm.jujutsu.service.AuthService;
+import com.pm.jujutsu.service.SupabaseStorageService;
 import com.pm.jujutsu.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,16 +27,28 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private SupabaseStorageService supabaseStorageService;
+
 
 
     Logger logger  = Logger.getLogger("auth");
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO requestBody) {
-        logger.info("IN Login endpoint");
+        logger.info("📥 IN Login endpoint");
+        logger.info("📧 Email received: " + requestBody.getEmail());
+        logger.info("🔑 Password received: " + (requestBody.getPassword() != null ? "***" + requestBody.getPassword().length() + " chars" : "NULL"));
+        
         return authService.login(requestBody)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+                .map(response -> {
+                    logger.info("✅ Login successful, returning token");
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    logger.warning("❌ Login failed - returning 401");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                });
     }
 
 
@@ -65,10 +78,10 @@ public class AuthController {
             @RequestPart(value = "profilePic", required = false) MultipartFile profilePic
     ) throws IOException {
 
-//        if (profilePic != null && !profilePic.isEmpty()) {
-//            String profilePicUrl = azureBlobService.uploadFile(profilePic);
-//            userRequestDTO.setProfilePicUrl(profilePicUrl);
-//        }
+        if (profilePic != null && !profilePic.isEmpty()) {
+            String profilePicUrl = supabaseStorageService.uploadFile(profilePic);
+            userRequestDTO.setProfilePicUrl(profilePicUrl);
+        }
 
         UserResponseDTO user = userService.createUser(userRequestDTO);
 

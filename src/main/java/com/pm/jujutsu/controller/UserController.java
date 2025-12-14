@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -43,11 +45,11 @@ public class UserController {
         return ResponseEntity.ok().body(userService.updateUser(user));
     }
 
-//    @PostMapping("/upload-profile-picture")
-//    public ResponseEntity<UserResponseDTO> uploadProfilePicture(@RequestParam("file") MultipartFile file) throws IOException {
-//        UserResponseDTO updatedUser = userService.updateProfilePicture(file);
-//        return ResponseEntity.ok(updatedUser);
-//    }
+    @PostMapping("/upload-profile-picture")
+    public ResponseEntity<UserResponseDTO> uploadProfilePicture(@RequestParam("file") MultipartFile file) throws IOException {
+        UserResponseDTO updatedUser = userService.updateProfilePicture(file);
+        return ResponseEntity.ok(updatedUser);
+    }
 
     @DeleteMapping("/{username}")
     public ResponseEntity<Void> deleteUser(@PathVariable String username) {

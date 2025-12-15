@@ -41,6 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("⚠️ No valid Authorization header for: " + path);
             filterChain.doFilter(request, response);
             return;
         }
@@ -48,6 +49,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             String jwt = authHeader.substring(7);
             String username = jwtUtil.extractUsername(jwt);
+            
+            System.out.println("🔐 JWT Auth - Path: " + path + ", Email: " + username);
             
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -58,11 +61,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("✅ Authentication successful for: " + username);
+                } else {
+                    System.out.println("❌ Token validation failed for: " + username);
                 }
             }
         } catch (Exception e) {
-            // Invalid token, continue without authentication
-            // Don't throw exception - let Spring Security handle authorization
+            System.err.println("❌ JWT Auth Error: " + e.getMessage());
+            e.printStackTrace();
         }
         
         filterChain.doFilter(request, response);

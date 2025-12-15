@@ -233,16 +233,17 @@ public class ProjectService {
 
 
 
-    public List<ProjectResponseDTO> recommendProjects(String userId){
+    public List<ProjectResponseDTO> recommendProjects(String username){
 
-        ObjectId objectId = new ObjectId(userId);
-        Optional<User> userOpt = userRepository.findById(objectId);
+        Optional<User> userOpt = userRepository.findByUsername(username);
 
         if(userOpt.isEmpty()){
             return List.of();
         }
 
         User user = userOpt.get();
+        String userId = user.getId().toHexString();
+        
         List<String> recommendPosts = neo4jService.getProjectBasedOnInterests(userId,user.getInterests());
         List<String> recommendPostFromConnections = neo4jService.recommendProjectBasedOnConnectionsAndTags(userId, user.getInterests());
 
@@ -272,10 +273,10 @@ public class ProjectService {
     
 
 
-    public List<ProjectResponseDTO> getAllProjects(String email){
+    public List<ProjectResponseDTO> getAllProjects(String username){
 
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new NotFoundException("User not found"));
         
         ObjectId userId = user.getId();

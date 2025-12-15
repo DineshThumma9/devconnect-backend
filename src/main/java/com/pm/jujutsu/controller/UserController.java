@@ -2,6 +2,7 @@ package com.pm.jujutsu.controller;
 
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
+import com.pm.jujutsu.dtos.UserUpdateDTO;
 import com.pm.jujutsu.mappers.UserMappers;
 import com.pm.jujutsu.service.Neo4jService;
 import com.pm.jujutsu.service.UserService;
@@ -41,7 +42,7 @@ public class UserController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<UserResponseDTO> updateUser(@RequestBody UserRequestDTO user) throws IllegalAccessException {
+    public ResponseEntity<UserResponseDTO> updateUser(@RequestBody UserUpdateDTO user) throws IllegalAccessException {
         return ResponseEntity.ok().body(userService.updateUser(user));
     }
 
@@ -58,12 +59,8 @@ public class UserController {
     }
 
 
-    @PostMapping("/interests")
-    public ResponseEntity<Void> userInterests(@RequestBody UserRequestDTO user) {
-        UserResponseDTO updatedUser = userService.updateUser(user);
-        neo4jService.syncUserTags(updatedUser.getId(), user.interests);
-        return ResponseEntity.ok().build();
-    }
+    // Removed - interests are now handled automatically in updateUser()
+    // Use PUT /users/update instead
 
 
     @PutMapping("/follow/{username}")
@@ -86,13 +83,13 @@ public class UserController {
     }
 
 
-    @GetMapping("/{username}/suggested-connections")
-    public ResponseEntity<List<UserResponseDTO>> suggestedConnection(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        return ResponseEntity.ok(userService.getRecommendConnections(userDetails.getUsername()));
+    // @GetMapping("/{username}/suggested-connections")
+    // public ResponseEntity<List<UserResponseDTO>> suggestedConnection(
+    //         @AuthenticationPrincipal UserDetails userDetails
+    // ) {
+    //     return ResponseEntity.ok(userService.getRecommendConnections(userDetails.getUsername()));
 
-    }
+    // }
 
 
 }

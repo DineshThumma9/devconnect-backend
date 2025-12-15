@@ -43,10 +43,12 @@ public interface UserNodeRepository  extends Neo4jRepository<UserNode, String>{
 
 
     @Query("""
-               
-            MATCH (u:User)-[:INTERESTED_IN]->(t:Tag)
+            MATCH (currentUser:User {id: $userId})
+            MATCH (otherUser:User)-[:INTERESTED_IN]->(t:Tag)
             WHERE t.name IN $tags
-            RETURN DISTINCT u.id AS userId
+            AND otherUser.id <> $userId
+            AND NOT (currentUser)-[:FOLLOWS]->(otherUser)
+            RETURN DISTINCT otherUser.id AS userId
             LIMIT 20
             """)
     List<String> recommendConnectionsBasedOnUserInterests(String userId, Set<String> tags);

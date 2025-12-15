@@ -2,6 +2,7 @@ package com.pm.jujutsu.service;
 
 import com.pm.jujutsu.dtos.UserRequestDTO;
 import com.pm.jujutsu.dtos.UserResponseDTO;
+import com.pm.jujutsu.dtos.UserUpdateDTO;
 import com.pm.jujutsu.exceptions.BadRequestException;
 import com.pm.jujutsu.exceptions.ConflictException;
 import com.pm.jujutsu.exceptions.NotFoundException;
@@ -74,7 +75,7 @@ public class UserService {
 
         // Sync interests to Neo4j only if they exist
         if (savedUser.getInterests() != null && !savedUser.getInterests().isEmpty()) {
-            neo4jService.createUserInterestsRelationship(
+            neo4jService.syncUserTags(
                 savedUser.getId().toHexString(), 
                 savedUser.getInterests()
             );
@@ -87,7 +88,7 @@ public class UserService {
 
 
 
-    public UserResponseDTO updateUser(UserRequestDTO user) {
+    public UserResponseDTO updateUser(UserUpdateDTO user) {
         User updatedUser = userRepository.getUserByEmail(user.getEmail()).orElseThrow(
                 () -> new NotFoundException("User doesnt exist")
         );
@@ -96,22 +97,30 @@ public class UserService {
             throw new UnauthorizedException("User not authorized");
         }
 
-        updatedUser.setUsername(user.getUsername());
-        updatedUser.setName(user.getName());
+        // Update only provided fields
+        if (user.getUsername() != null) {
+            updatedUser.setUsername(user.getUsername());
+        }
+        if (user.getName() != null) {
+            updatedUser.setName(user.getName());
+        }
+        if (user.getProfilePicUrl() != null) {
+            updatedUser.setProfilePicUrl(user.getProfilePicUrl());
+        }
         
         // Update interests if provided
-        if (user.getInterests() != null && !user.getInterests().isEmpty()) {
+        if (user.getInterests() != null) {
             updatedUser.setInterests(user.getInterests());
         }
 
-        User newUser = userRepository.save(updatedUser);
+        User savedUser = userRepository.save(updatedUser);
         
-        // Sync interests to Neo4j if they were updated
-        if (user.getInterests() != null && !user.getInterests().isEmpty()) {
-            neo4jService.syncUserTags(newUser.getId().toHexString(), user.getInterests());
+        // Sync interests to Neo4j after saving to MongoDB
+        if (savedUser.getInterests() != null && !savedUser.getInterests().isEmpty()) {
+            neo4jService.syncUserTags(savedUser.getId().toHexString(), savedUser.getInterests());
         }
         
-        return userMappers.toResponseEntity(newUser);
+        return userMappers.toResponseEntity(savedUser);
     }
 
     public UserResponseDTO updateProfilePicture(MultipartFile file) throws IOException {
@@ -213,23 +222,36 @@ public class UserService {
     }
 
 
-    public List<UserResponseDTO> getRecommendConnections(String userId){
-        ObjectId objectId = new ObjectId(userId);
-        Optional<User> userOpt = userRepository.findById(objectId);
+    public List<UserResponseDTO> getRecommendConnections(String username){
+        Optional<User> userOpt = userRepository.findByUsername(username);
 
         if(userOpt.isEmpty()){
+            System.out.println("❌ User not found: " + username);
             return List.of();
         }
 
         User user = userOpt.get();
+        String userId = user.getId().toHexString();
+        
+        System.out.println("🔍 Getting recommendations for user: " + username);
+        System.out.println("   User ID: " + userId);
+        System.out.println("   Interests: " + user.getInterests());
+        
+        if (user.getInterests() == null || user.getInterests().isEmpty()) {
+            System.out.println("⚠️ User has no interests - cannot recommend connections");
+            return List.of();
+        }
+        
         List<String> recommendUsers = neo4jService.getConnectionsBasedOnInterests(user.getInterests());
         List<String> recommendConnections = neo4jService.getConnectionsBasedOnConnectionsAndInterests(userId, user.getInterests());
 
-
-
+        System.out.println("📊 Recommendations based on interests: " + recommendUsers.size());
+        System.out.println("📊 Recommendations based on follows: " + recommendConnections.size());
 
         recommendConnections.addAll(recommendUsers);
         List<String> uniqueUserIds = recommendConnections.stream().distinct().toList();
+        
+        System.out.println("📊 Total unique recommendations: " + uniqueUserIds.size());
 
         List<ObjectId> objectIds = uniqueUserIds.stream()
                 .map(ObjectId::new)

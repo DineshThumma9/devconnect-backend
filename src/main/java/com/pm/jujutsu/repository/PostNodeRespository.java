@@ -39,7 +39,8 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, String> {
                
                            MATCH (u:User {id: $userId})-[:INTERESTED_IN]->(t:Tag)<-[:TAGGED_WITH]-(p:Post)
                            WHERE t.name IN $tags
-                           RETURN DISTINCT p.id AS postId
+                           WITH DISTINCT p
+                           RETURN p.id AS postId
                            ORDER BY p.timestamp DESC
                            LIMIT 20
             """)
@@ -53,7 +54,8 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, String> {
             
             MATCH (:User {id: $userId})-[:FOLLOWS]->(f:User)-[:TAGGED_WITH]->(p:Post)<-[:TAGGED_WITH]-(t:Tag)
             WHERE t.name IN $tags
-            RETURN DISTINCT p.id AS postId
+            WITH DISTINCT p
+            RETURN p.id AS postId
             ORDER BY p.timestamp DESC
             LIMIT 20
           

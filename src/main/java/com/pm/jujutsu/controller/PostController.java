@@ -50,7 +50,7 @@ public class PostController {
 
     @PutMapping("/{username}")
     public ResponseEntity<PostResponseDTO> updatePost(
-            @PathVariable("username") String username,
+            @PathVariable String username,
             @RequestBody PostRequestDTO postRequestDTO
 
     ) {
@@ -123,30 +123,15 @@ public class PostController {
     }
 
 
-    @GetMapping("/trending")
-    public ResponseEntity<List<PostResponseDTO>> getTrendingPost(
-
-    ) {
-
-        return ResponseEntity.ok(postService.getTrendingPost());
-
-    }
-
-
-    @GetMapping("/for-you")
-    public ResponseEntity<List<PostResponseDTO>> forYouPosts(
-
-    ) {
-
-        return ResponseEntity.ok(postService.getRecommendPosts());
-
-    }
+  
 
 
     @GetMapping("/get-posts/{username}")
     public List<PostResponseDTO> getMethodName(@PathVariable String username) {
         return postService.getPostsByUserId(username);
     }
+
+  
     
 
 

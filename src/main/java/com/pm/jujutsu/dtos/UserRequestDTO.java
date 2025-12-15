@@ -1,5 +1,6 @@
 package com.pm.jujutsu.dtos;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -8,33 +9,22 @@ import java.util.Set;
 
 @Data
 public class UserRequestDTO {
+    // For creating new users (registration) - all required
 
-
-
-
-
-   /*
-   Should frontend send uuid of used and then we save it or backend should
-   generate it what is best here
-   
-   */
-    @NotBlank
+    @NotBlank(message = "Name is required")
     public String name;
 
-    @NotBlank
+    @NotBlank(message = "Password is required")
     public String password;
 
-    @NotBlank
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be valid")
     public String email;
 
-    @NotBlank
+    @NotBlank(message = "Username is required")
     public String username;
 
     public String profilePicUrl;
 
-
     public Set<String> interests = new HashSet<>();
-
-
-
 }

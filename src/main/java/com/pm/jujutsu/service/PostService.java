@@ -288,8 +288,8 @@ public class PostService {
 
 
 
-    public List<PostResponseDTO> getPostsByUserId(String email) {
-        User user = userRepository.findByEmail(email)
+    public List<PostResponseDTO> getPostsByUserId(String username) {
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User not found"));
         ObjectId objectId = user.getId();
         List<Post> posts = postRepository.findAll().stream()

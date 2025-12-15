@@ -13,8 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 
@@ -83,20 +81,15 @@ public class ProjectController {
                 : ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/trending")
-    public ResponseEntity<List<ProjectResponseDTO>> getTrendingProjects() {
-        return ResponseEntity.ok(projectService.getTrendingProjects());
-    }
-
-    @GetMapping("/recommendations")
-    public ResponseEntity<List<ProjectResponseDTO>> recommendProjects(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(projectService.recommendProjects(userDetails.getUsername()));
-    }
-
+   
     @GetMapping("/get-projects/{username}")
-    public List<ProjectResponseDTO>  getAllProjectsOfUser(@PathVariable String username) {
+    public List<ProjectResponseDTO> getAllProjectsOfUser(@PathVariable String username) {
         return projectService.getAllProjects(username);
     }
+
+    // @GetMapping("/get-projects/{username}")
+    // public List<ProjectResponseDTO>  getAllProjectsOfUser(@PathVariable String username) {
+    //     return projectService.getAllProjects(username);
+    // }
     
 }

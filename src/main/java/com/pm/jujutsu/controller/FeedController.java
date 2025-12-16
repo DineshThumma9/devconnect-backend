@@ -46,7 +46,7 @@ public class FeedController {
      
 
     
-      @GetMapping("/trending/posts")
+    @GetMapping("/trending/posts")
     public ResponseEntity<List<PostResponseDTO>> getTrendingPost(
 
     ) {

@@ -191,33 +191,47 @@ public class UserService {
 
 
     @Transactional
-    public boolean addFollower(String userId,String ownerId ){
-        ObjectId ownerObjectId = new ObjectId(userId);
-        ObjectId userObjectId = new ObjectId(ownerId);
-        Optional<User> owner = userRepository.getById(ownerObjectId);
-        Optional<User> user = userRepository.getById(userObjectId);
-        if(user.isEmpty() || owner.isEmpty()){
+    public boolean addFollower(String targetUsername, String currentUsername) {
+        Optional<User> targetUser = userRepository.findByUsername(targetUsername);
+        Optional<User> currentUser = userRepository.findByUsername(currentUsername);
+        
+        if (targetUser.isEmpty() || currentUser.isEmpty()) {
             return false;
         }
-        User owner1 = owner.get();
-        owner1.getFollowingIds().add(userObjectId);
-        neo4jService.followRelationship(userId,ownerId);
+        
+        User target = targetUser.get();
+        User current = currentUser.get();
+        
+        target.getFollowerIds().add(current.getId());
+        current.getFollowingIds().add(target.getId());
+        
+        userRepository.save(target);
+        userRepository.save(current);
+        
+        neo4jService.followRelationship(current.getId().toHexString(), target.getId().toHexString());
         return true;
     }
 
 
     @Transactional
-    public boolean removeFollower(String userId,String ownerId ){
-        ObjectId ownerObjectId = new ObjectId(userId);
-        ObjectId userObjectId = new ObjectId(ownerId);
-        Optional<User> owner = userRepository.getById(ownerObjectId);
-        Optional<User> user = userRepository.getById(userObjectId);
-        if(user.isEmpty() || owner.isEmpty()){
+    public boolean removeFollower(String targetUsername, String currentUsername) {
+        Optional<User> targetUser = userRepository.findByUsername(targetUsername);
+        Optional<User> currentUser = userRepository.findByUsername(currentUsername);
+        
+        if (targetUser.isEmpty() || currentUser.isEmpty()) {
             return false;
         }
-        User owner1 = owner.get();
-        owner1.getFollowerIds().add(userObjectId);
-        neo4jService.unfollowRelationship(userId,ownerId);
+        
+        User target = targetUser.get();
+        User current = currentUser.get();
+        
+        target.getFollowerIds().remove(current.getId());
+        current.getFollowingIds().remove(target.getId());
+        
+        userRepository.save(target);
+        userRepository.save(current);
+        
+        neo4jService.unfollowRelationship(current.getId().toHexString(), target.getId().toHexString());
         return true;
     }
 

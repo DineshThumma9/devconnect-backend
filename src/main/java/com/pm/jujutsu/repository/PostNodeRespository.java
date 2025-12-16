@@ -13,7 +13,11 @@ import java.util.Set;
 public interface PostNodeRespository extends Neo4jRepository<PostNode, String> {
 
 
-    @Query("MATCH (u:User {id:$userId}) (p:Post {id:$postId} MERGE (p) <- [:LIKED_BY] - (u)")
+    @Query("""
+            MATCH (u:User {id: $userId})
+            MATCH (p:Post {id: $postId})
+            MERGE (u)-[:LIKED]->(p)
+        """)
     void likeRelationship(String userId, String postId);
 
 
@@ -41,7 +45,6 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, String> {
                            WHERE t.name IN $tags
                            WITH DISTINCT p
                            RETURN p.id AS postId
-                           ORDER BY p.timestamp DESC
                            LIMIT 20
             """)
     List<String> recommendPostBasedOnUserInterests(String userId, Set<String> tags);
@@ -52,11 +55,11 @@ public interface PostNodeRespository extends Neo4jRepository<PostNode, String> {
     @Query("""
             
             
-            MATCH (:User {id: $userId})-[:FOLLOWS]->(f:User)-[:TAGGED_WITH]->(p:Post)<-[:TAGGED_WITH]-(t:Tag)
+            MATCH (:User {id: $userId})-[:FOLLOWS]->(f:User)
+            MATCH (f)-[:INTERESTED_IN]->(t:Tag)<-[:TAGGED_WITH]-(p:Post)
             WHERE t.name IN $tags
             WITH DISTINCT p
             RETURN p.id AS postId
-            ORDER BY p.timestamp DESC
             LIMIT 20
           
           """)

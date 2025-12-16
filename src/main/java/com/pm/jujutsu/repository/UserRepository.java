@@ -24,6 +24,5 @@ public interface UserRepository extends MongoRepository<User, ObjectId> {
 
     Optional<User> findByUsername(String username);
 
-    @Query("")
-    List<Optional<User>> findAllById(List<String> recommendConnections);
+    List<User> findAllByIdIn(List<ObjectId> ids);
 }

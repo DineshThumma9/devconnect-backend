@@ -19,8 +19,6 @@ public class Comment {
     
     @Id
     public ObjectId id;
-
-    
     public ObjectId postId;
     public ObjectId userId;
     public String comment;

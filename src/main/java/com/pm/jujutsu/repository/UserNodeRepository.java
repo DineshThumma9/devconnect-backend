@@ -13,14 +13,17 @@ import java.util.Set;
 public interface UserNodeRepository  extends Neo4jRepository<UserNode, String>{
 
 
-    @Query("MATCH (u:User {id:$userId) (f:User {id:$fId} " +
-            "MERGE (u)-[:FOLLOWS]-(f)")
+    @Query("""
+            MATCH (u:User {id: $userId})
+            MATCH (f:User {id: $fId})
+            MERGE (u)-[:FOLLOWS]->(f)
+        """)
     void followRelationship(String userId, String fId);
 
 
 
     @Query("""
-            MATCH (u:User {id: $userId})-[l:FOLLOWS]->(p:User {id: $followId})
+            MATCH (u:User {id: $userId})-[l:FOLLOWS]->(f:User {id: $fId})
             DELETE l
         """)
     void  unfollowRelationship(String userId, String fId);

@@ -2,6 +2,7 @@ package com.pm.jujutsu.controller;
 
 
 import com.pm.jujutsu.dtos.CommentRequestDTO;
+import com.pm.jujutsu.dtos.CommentResponseDTO;
 import com.pm.jujutsu.dtos.PostRequestDTO;
 import com.pm.jujutsu.dtos.PostResponseDTO;
 import com.pm.jujutsu.service.PostService;
@@ -23,13 +24,13 @@ public class PostController {
     public PostService postService;
 
 
-    @GetMapping("/{username}")
+    @GetMapping("/{id}")
     public ResponseEntity<PostResponseDTO> getPost(
-            @PathVariable String username
+            @PathVariable String id
     ) {
 
 
-        PostResponseDTO post = postService.getPost(username);
+        PostResponseDTO post = postService.getPost(id);
         return post != null ? ResponseEntity.ok(post) : ResponseEntity.notFound().build();
 
     }
@@ -110,7 +111,18 @@ public class PostController {
                 ResponseEntity.notFound().build();
 
     }
+    
 
+
+    @GetMapping("/comments/{postId}")
+    public ResponseEntity<List<CommentResponseDTO>> getCommentsOnPost(
+            @PathVariable("postId") String postId
+    ) {
+
+        List<CommentResponseDTO> comments = postService.getCommentsOnPost(postId);
+        return comments != null ? ResponseEntity.ok(comments) : ResponseEntity.notFound().build();
+
+    }
     @PutMapping("/share/{username}")
     public ResponseEntity<Void> share(
             @PathVariable("username") String username

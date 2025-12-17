@@ -1,11 +1,13 @@
 package com.pm.jujutsu.service;
 
+import com.pm.jujutsu.dtos.CommentResponseDTO;
 import com.pm.jujutsu.dtos.PostRequestDTO;
 import com.pm.jujutsu.dtos.PostResponseDTO;
 import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.PostMapper;
 import com.pm.jujutsu.model.*;
+import com.pm.jujutsu.repository.CommentRepository;
 import com.pm.jujutsu.repository.PostNodeRespository;
 import com.pm.jujutsu.repository.PostRepository;
 import com.pm.jujutsu.repository.UserRepository;
@@ -42,6 +44,9 @@ public class PostService {
 
     @Autowired
     public Neo4jService neo4jService;
+
+    @Autowired
+    public CommentRepository commentRepository;
 
 
     @Autowired
@@ -305,6 +310,31 @@ public class PostService {
                     return responseDTO;
                 })
                 .toList();
+    }
+
+
+    public CommentResponseDTO toResponseDTO(Comment comment) {
+        CommentResponseDTO dto = new CommentResponseDTO();
+        Optional<User> userOpt = userRepository.findById(comment.getUserId());
+        if(!userOpt.isPresent()){
+            throw new NotFoundException("User Not Found");
+        }
+        User user = userOpt.get();
+        dto.setId(comment.getId().toHexString());
+        dto.setComment(comment.getComment());
+        dto.setCreatedAt(comment.getCreatedAt());
+        dto.setUsername(user.getUsername());
+        dto.setUserProfilePicUrl(user.getProfilePicUrl());
+        return dto;
+    }
+
+    public List<CommentResponseDTO> getCommentsOnPost(String postId) {
+        ObjectId postObjectId = new ObjectId(postId);
+        List<Comment> commentsOpt = commentRepository.findByPostId(postObjectId);
+        List<CommentResponseDTO> commentResponseDTOS = commentsOpt.stream().map(comment -> toResponseDTO(comment)).toList();
+        return commentResponseDTOS;
+    
+        
     }
 
 }

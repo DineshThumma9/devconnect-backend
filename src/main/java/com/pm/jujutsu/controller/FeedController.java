@@ -36,9 +36,9 @@ public class FeedController {
     
     @GetMapping("/suggested-connections/{username}")
     public ResponseEntity<List<UserResponseDTO>> suggestedConnection(
-            @AuthenticationPrincipal UserDetails userDetails
+            @PathVariable String username
     ) {
-        return ResponseEntity.ok(userService.getRecommendConnections(userDetails.getUsername()));
+        return ResponseEntity.ok(userService.getRecommendConnections(username));
 
     }
 

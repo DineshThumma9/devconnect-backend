@@ -191,9 +191,13 @@ public class UserService {
 
 
     @Transactional
-    public boolean addFollower(String targetUsername, String currentUsername) {
+    public boolean addFollower(String targetUsername, String currentUserEmailOrUsername) {
         Optional<User> targetUser = userRepository.findByUsername(targetUsername);
-        Optional<User> currentUser = userRepository.findByUsername(currentUsername);
+        // Current user identifier could be email (from UserDetails) or username
+        Optional<User> currentUser = userRepository.findByEmail(currentUserEmailOrUsername);
+        if (currentUser.isEmpty()) {
+            currentUser = userRepository.findByUsername(currentUserEmailOrUsername);
+        }
         
         if (targetUser.isEmpty() || currentUser.isEmpty()) {
             return false;
@@ -214,9 +218,13 @@ public class UserService {
 
 
     @Transactional
-    public boolean removeFollower(String targetUsername, String currentUsername) {
+    public boolean removeFollower(String targetUsername, String currentUserEmailOrUsername) {
         Optional<User> targetUser = userRepository.findByUsername(targetUsername);
-        Optional<User> currentUser = userRepository.findByUsername(currentUsername);
+        // Current user identifier could be email (from UserDetails) or username
+        Optional<User> currentUser = userRepository.findByEmail(currentUserEmailOrUsername);
+        if (currentUser.isEmpty()) {
+            currentUser = userRepository.findByUsername(currentUserEmailOrUsername);
+        }
         
         if (targetUser.isEmpty() || currentUser.isEmpty()) {
             return false;

@@ -20,6 +20,9 @@ import java.util.List;
 public class PostController {
 
 
+    
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PostController.class);
+    
     @Autowired
     public PostService postService;
 
@@ -49,16 +52,12 @@ public class PostController {
     }
 
 
-    @PutMapping("/{username}")
+    @PutMapping("/{postId}")
     public ResponseEntity<PostResponseDTO> updatePost(
-            @PathVariable String username,
+            @PathVariable String postId,
             @RequestBody PostRequestDTO postRequestDTO
-
     ) {
-
-        return ResponseEntity.ok(postService.updatePost(postRequestDTO, username));
-
-
+        return ResponseEntity.ok(postService.updatePost(postRequestDTO, postId));
     }
 
 
@@ -99,17 +98,15 @@ public class PostController {
                 ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/comment/{postId}")
+    @PostMapping("/comment")
     public ResponseEntity<Void> commentOnPost(
-            CommentRequestDTO comment
-
-
+            @RequestBody CommentRequestDTO comment
     ) {
 
+       logger.info("Comment received: " + comment.getComment() + " on Post ID: " + comment.getPostId());    
         return postService.commentOnPost(comment.getPostId(), comment.getComment()) ?
                 ResponseEntity.ok().build() :
                 ResponseEntity.notFound().build();
-
     }
     
 

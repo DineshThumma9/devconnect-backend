@@ -15,6 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/users")
@@ -57,6 +60,29 @@ public class UserController {
         userService.deleteUser(username);
         return ResponseEntity.ok().build();
     }
+
+
+
+    @GetMapping("/following/{username}")
+    public ResponseEntity<List<UserResponseDTO>>  userFollowings(@PathVariable String username) {
+         List<UserResponseDTO> followings = userService.getFollowings(username);
+         return ResponseEntity.ok(followings);
+        
+    }
+
+
+    @GetMapping("followers/{username}")
+    public ResponseEntity<List<UserResponseDTO>>  userFollowers(@PathVariable String username) {
+        return ResponseEntity.ok(userService.getFollowers(username));
+    }
+    
+
+    @GetMapping("/chats")
+    public String userChats(@RequestParam String param) {
+        return new String();
+    }
+    
+    
 
 
     // Removed - interests are now handled automatically in updateUser()

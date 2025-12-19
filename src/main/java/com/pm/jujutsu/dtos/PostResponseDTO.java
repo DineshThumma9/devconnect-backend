@@ -27,6 +27,7 @@ public class PostResponseDTO {
     private int shares;
     private String[] media;
     private Set<String> tags = new HashSet<>();
+    private boolean likedByCurrentUser = false;
 
 
 }

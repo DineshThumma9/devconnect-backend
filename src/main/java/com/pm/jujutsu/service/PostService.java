@@ -3,6 +3,7 @@ package com.pm.jujutsu.service;
 import com.pm.jujutsu.dtos.CommentResponseDTO;
 import com.pm.jujutsu.dtos.PostRequestDTO;
 import com.pm.jujutsu.dtos.PostResponseDTO;
+import com.pm.jujutsu.exceptions.BadRequestException;
 import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.PostMapper;
@@ -76,18 +77,16 @@ public class PostService {
         neo4jService.syncPostTags(post.getId().toHexString(), post.getTags());
 
         PostResponseDTO responseDTO = postMapper.toResponseEntity(savedPost);
-
-        Optional<User> owner = userRepository.findById(savedPost.getOwnerId());
-        if (owner.isPresent()) {
-            responseDTO.setOwnerUsername(owner.get().getUsername());
-            responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
-            
-        }
+        enrichPostResponse(savedPost, responseDTO);
 
         return responseDTO;
     }
 
     public PostResponseDTO updatePost(PostRequestDTO postRequestDTO, String postId) {
+        if (!ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID format");
+        }
+        
         ObjectId objectId = new ObjectId(postId);
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
 
@@ -98,39 +97,36 @@ public class PostService {
             throw new UnauthorizedException("User not authorized to update this post");
         }
 
-
         post.setTitle(postRequestDTO.getTitle());
         post.setContent(postRequestDTO.getContent());
 
         Post savedPost = postRepository.save(post);
         PostResponseDTO responseDTO = postMapper.toResponseEntity(savedPost);
-
-        Optional<User> owner = userRepository.findById(savedPost.getOwnerId());
-        if (owner.isPresent()) {
-            responseDTO.setOwnerUsername(owner.get().getUsername());
-            responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
-        }
+        enrichPostResponse(savedPost, responseDTO);
 
         return responseDTO;
     }
 
     public PostResponseDTO getPost(String postId) {
+        if (!ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID format");
+        }
+        
         ObjectId objectId = new ObjectId(postId);
         Post post = postRepository.findById(objectId)
                 .orElseThrow(() -> new NotFoundException("Post not found"));
 
         PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
-
-        Optional<User> owner = userRepository.findById(post.getOwnerId());
-        if (owner.isPresent()) {
-            responseDTO.setOwnerUsername(owner.get().getUsername());
-            responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
-        }
+        enrichPostResponse(post, responseDTO);
 
         return responseDTO;
     }
 
     public boolean deletePost(String postId) {
+        if (!ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID format");
+        }
+        
         ObjectId objectId = new ObjectId(postId);
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
 
@@ -149,13 +145,24 @@ public class PostService {
 
     @Transactional
     public boolean increaseLike(String postId) {
+        if (!ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID format");
+        }
+        
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
         if (post.isPresent()) {
             Post post1 = post.get();
-
-            post1.setLikes(post1.getLikes() + 1);
             ObjectId userId = jwtUtil.getCurrentUser().getId();
+            
+            // Check if user has already liked this post
+            if (post1.getLikedBy().contains(userId)) {
+                return false; // Already liked, don't duplicate
+            }
+            
+            // Add user to likedBy set
+            post1.getLikedBy().add(userId);
+            post1.setLikes(post1.getLikes() + 1);
             neo4jService.createLikeRelationship(postId, String.valueOf(userId));
             postRepository.save(post1);
             return true;
@@ -169,12 +176,24 @@ public class PostService {
 
     @Transactional
     public boolean decreaseLike(String postId) {
+        if (!ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID format");
+        }
+        
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
         if (post.isPresent()) {
             Post post1 = post.get();
-            post1.setLikes(post1.getLikes() - 1);
             ObjectId userId = jwtUtil.getCurrentUser().getId();
+            
+            // Check if user has actually liked this post
+            if (!post1.getLikedBy().contains(userId)) {
+                return false; // User hasn't liked it, can't unlike
+            }
+            
+            // Remove user from likedBy set
+            post1.getLikedBy().remove(userId);
+            post1.setLikes(post1.getLikes() - 1);
             neo4jService.removeLikeRelationship(postId, String.valueOf(userId));
             postRepository.save(post1);
             return true;
@@ -187,6 +206,10 @@ public class PostService {
 
     @Transactional
     public boolean commentOnPost(String postId, String comment) {
+        // if (!ObjectId.isValid(postId)) {
+        //     throw new BadRequestException("Invalid post ID format");
+        // }
+        
         ObjectId postObjectId = new ObjectId(postId);
         ObjectId userObjectId = jwtUtil.getCurrentUser().getId();
 
@@ -204,15 +227,28 @@ public class PostService {
         comment1.setPostId(postObjectId);
         comment1.setUserId(userObjectId);
         comment1.setComment(comment);
+        
+        // Save the comment to database
+        Comment savedComment = commentRepository.save(comment1);
+        
+        // Create Neo4j relationship: User -[:COMMENTED]-> Comment -[:ON]-> Post
+        neo4jService.createCommentRelationship(
+            userObjectId.toHexString(),
+            savedComment.getId().toHexString(),
+            postObjectId.toHexString()
+        );
 
-        post1.setCommentsCount((post1.getCommentsCount() + 1));
+        // Increment comment count on post
+        post1.setCommentsCount(post1.getCommentsCount() + 1);
         postRepository.save(post1);
         return true;
-
-
     }
 
     public boolean shareAPost(String postId) {
+        if (!ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID format");
+        }
+        
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
         if (post.isEmpty()) {
@@ -228,17 +264,12 @@ public class PostService {
 
 
     public List<PostResponseDTO> getTrendingPost() {
-        List<Post> posts = postRepository.findAllByLikes();
+        List<Post> posts = postRepository.findAllByOrderByLikesDesc();
         
         return posts.stream()
                 .map(post -> {
                     PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
-                    // Set owner information
-                    Optional<User> owner = userRepository.findById(post.getOwnerId());
-                    if (owner.isPresent()) {
-                        responseDTO.setOwnerUsername(owner.get().getUsername());
-                        responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
-                    }
+                    enrichPostResponse(post, responseDTO);
                     return responseDTO;
                 })
                 .toList();
@@ -280,12 +311,7 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
-                    // Set owner information
-                    Optional<User> owner = userRepository.findById(post.getOwnerId());
-                    if (owner.isPresent()) {
-                        responseDTO.setOwnerUsername(owner.get().getUsername());
-                        responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
-                    }
+                    enrichPostResponse(post, responseDTO);
                     return responseDTO;
                 })
                 .collect(Collectors.toList());
@@ -304,9 +330,7 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
-                    // Set owner information
-                    responseDTO.setOwnerUsername(user.getUsername());
-                    responseDTO.setOwnerProfilePicUrl(user.getProfilePicUrl());
+                    enrichPostResponse(post, responseDTO);
                     return responseDTO;
                 })
                 .toList();
@@ -329,12 +353,43 @@ public class PostService {
     }
 
     public List<CommentResponseDTO> getCommentsOnPost(String postId) {
+        if (!ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID format");
+        }
+        
         ObjectId postObjectId = new ObjectId(postId);
         List<Comment> commentsOpt = commentRepository.findByPostId(postObjectId);
         List<CommentResponseDTO> commentResponseDTOS = commentsOpt.stream().map(comment -> toResponseDTO(comment)).toList();
         return commentResponseDTOS;
     
         
+    }
+
+    /**
+     * Helper method to set isLikedByCurrentUser flag in PostResponseDTO
+     */
+    private void setIsLikedByCurrentUser(Post post, PostResponseDTO responseDTO) {
+        try {
+            ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
+            responseDTO.setLikedByCurrentUser(post.getLikedBy().contains(currentUserId));
+        } catch (Exception e) {
+            // If user is not authenticated, default to false
+            responseDTO.setLikedByCurrentUser(false);
+        }
+    }
+
+    /**
+     * Helper method to enrich PostResponseDTO with owner information and like status
+     */
+    private void enrichPostResponse(Post post, PostResponseDTO responseDTO) {
+        // Set owner information
+        Optional<User> owner = userRepository.findById(post.getOwnerId());
+        if (owner.isPresent()) {
+            responseDTO.setOwnerUsername(owner.get().getUsername());
+            responseDTO.setOwnerProfilePicUrl(owner.get().getProfilePicUrl());
+        }
+        // Set if current user liked this post
+        setIsLikedByCurrentUser(post, responseDTO);
     }
 
 }

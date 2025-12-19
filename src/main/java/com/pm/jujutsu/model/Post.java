@@ -37,12 +37,11 @@ public class Post {
 
     private String[] media;
 
-
-    private Set<Comment> comments = new HashSet<>();
+    // Relationships stored as IDs only (actual data in separate collections)
     private Set<ObjectId> likedBy = new HashSet<>();
     private Set<ObjectId> sharedBy = new HashSet<>();
 
-
+    // Counters
     private int likes = 0;
     private int commentsCount = 0;
     private int shares = 0;

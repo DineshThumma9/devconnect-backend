@@ -291,17 +291,10 @@ public class UserService {
 
 
 
-    public List<UserResponseDTO> getFollowers(String userId){
-        ObjectId objectId = new ObjectId(userId);
-        Optional<User> userOpt = userRepository.findById(objectId);
-
-        if(userOpt.isEmpty()){
-            return List.of();
-        }
-
-        User user = userOpt.get();
+    public List<UserResponseDTO> getFollowers(String userIdOrUsername){
+        User user = findUserByIdOrUsername(userIdOrUsername);
+        
         Set<ObjectId> followerIds = user.getFollowerIds();
-
         List<User> followers = StreamSupport.stream(userRepository.findAllById(followerIds).spliterator(), false)
                 .collect(Collectors.toList());
 
@@ -310,23 +303,32 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public List<UserResponseDTO> getFollowings(String userId){
-        ObjectId objectId = new ObjectId(userId);
-        Optional<User> userOpt = userRepository.findById(objectId);
-
-        if(userOpt.isEmpty()){
-            return List.of();
-        }
-
-        User user = userOpt.get();
+    public List<UserResponseDTO> getFollowings(String userIdOrUsername){
+        User user = findUserByIdOrUsername(userIdOrUsername);
+        
         Set<ObjectId> followingIds = user.getFollowingIds();
-
         List<User> followings = StreamSupport.stream(userRepository.findAllById(followingIds).spliterator(), false)
                 .collect(Collectors.toList());
 
         return followings.stream()
                 .map(userMappers::toResponseEntity)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    /**
+     * Helper method to find user by either ObjectId or username
+     */
+    private User findUserByIdOrUsername(String userIdOrUsername) {
+        try {
+            // Try parsing as ObjectId first
+            ObjectId objectId = new ObjectId(userIdOrUsername);
+            return userRepository.findById(objectId)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+        } catch (IllegalArgumentException e) {
+            // If not a valid ObjectId, treat as username
+            return userRepository.findByUsername(userIdOrUsername)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+        }
     }
 
 

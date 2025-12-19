@@ -7,16 +7,11 @@ import lombok.Data;
 @Data
 public class CommentRequestDTO {
 
-
-
-    @NotBlank
     @NotNull
-    private String username;
-
-    @NotNull
-    @NotBlank
+    @NotBlank(message = "Comment text cannot be blank")
     private String comment;
 
     @NotNull
+    @NotBlank(message = "Post ID cannot be blank")
     private String postId;
 }

@@ -188,4 +188,32 @@ public class Neo4jService {
         .run();
     }
 
+    /**
+     * Creates comment relationships: User -[:COMMENTED]-> Comment -[:ON]-> Post
+     * This creates a Comment node in Neo4j and establishes relationships
+     */
+    public void createCommentRelationship(String userId, String commentId, String postId) {
+        neo4jClient.query(
+            "MATCH (u:User {id: $userId}) " +
+            "MATCH (p:Post {id: $postId}) " +
+            "CREATE (c:Comment {id: $commentId}) " +
+            "CREATE (u)-[:COMMENTED]->(c) " +
+            "CREATE (c)-[:ON]->(p)"
+        )
+        .bindAll(Map.of("userId", userId, "commentId", commentId, "postId", postId))
+        .run();
+    }
+
+    /**
+     * Deletes a comment and its relationships from Neo4j
+     */
+    public void deleteCommentRelationship(String commentId) {
+        neo4jClient.query(
+            "MATCH (c:Comment {id: $commentId}) " +
+            "DETACH DELETE c"
+        )
+        .bindAll(Map.of("commentId", commentId))
+        .run();
+    }
+
 }

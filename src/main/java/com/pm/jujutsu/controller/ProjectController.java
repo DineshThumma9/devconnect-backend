@@ -45,8 +45,15 @@ public class ProjectController {
     public ResponseEntity<ProjectResponseDTO> createProject(
             @Valid @RequestPart("project") ProjectRequestDTO projectRequestDTO,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
-    )  {
+    ) throws IOException {
         return ResponseEntity.ok(projectService.createProject(projectRequestDTO, images));
+    }
+    
+    @PostMapping("/create-json")
+    public ResponseEntity<ProjectResponseDTO> createProjectJson(
+            @Valid @RequestBody ProjectRequestDTO projectRequestDTO
+    ) throws IOException {
+        return ResponseEntity.ok(projectService.createProject(projectRequestDTO, null));
     }
 
     @PutMapping("/{projectId}")

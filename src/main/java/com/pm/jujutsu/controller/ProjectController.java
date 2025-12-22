@@ -34,13 +34,6 @@ public class ProjectController {
 
 
 
-    /*
-    Should i make PostMapping with a query mapping with projectID frontend will randomly generate
-    UUID that backend will save 
-     */
-
-
-
     @PostMapping("/create")
     public ResponseEntity<ProjectResponseDTO> createProject(
             @Valid @RequestPart("project") ProjectRequestDTO projectRequestDTO,

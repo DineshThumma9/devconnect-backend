@@ -28,6 +28,7 @@ public class PostController {
 
 
     @GetMapping("/{id}")
+    
     public ResponseEntity<PostResponseDTO> getPost(
             @PathVariable String id
     ) {

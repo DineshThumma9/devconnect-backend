@@ -11,7 +11,11 @@ import com.pm.jujutsu.repository.ProjectRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import org.bson.types.ObjectId;
+import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,14 +51,17 @@ public class ProjectService {
     @Autowired
     private SupabaseStorageService supabaseStorageService;
 
+    private static final String CACHE_PROJECT = "projects";
+    
 
+    @CachePut(cacheNames = CACHE_PROJECT, key = "#result.projectId")
     public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO, List<MultipartFile> images) throws IOException {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
 
         Project project = projectMapper.toEntity(projectRequestDTO);
         project.setOwnerId(currentUserId);
 
-        // Upload images if provided
+        
         if (images != null && !images.isEmpty()) {
             List<String> mediaUrls = supabaseStorageService.uploadMultipleFiles(images, "projects");
             project.setMedia(mediaUrls.toArray(new String[0]));
@@ -62,25 +69,28 @@ public class ProjectService {
         
         Project savedProject = projectRepository.save(project);
         
-        // Create ProjectNode in Neo4j (without relationships)
+    
         neo4jService.createProjectNode(
             savedProject.getId().toHexString(),
             savedProject.getTitle(),
             savedProject.getDescription()
         );
         
-        // Create owner relationship separately
+    
+
         neo4jService.createProjectOwnerRelationship(
             savedProject.getId().toHexString(),
             savedProject.getOwnerId().toHexString()
         );
         
-        // Sync tags
+
         neo4jService.syncProjectTags(savedProject.getId().toHexString(), savedProject.getTechRequirements());
         
         return enrichProjectResponse(savedProject);
     }
 
+
+    @CachePut(cacheNames = CACHE_PROJECT, key = "#result.projectId")
     public ProjectResponseDTO updateProject(String projectId, ProjectRequestDTO projectRequestDTO) {
         ObjectId objectId = new ObjectId(projectId);
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
@@ -102,6 +112,7 @@ public class ProjectService {
         return enrichProjectResponse(savedProject);
     }
 
+    @Cacheable(cacheNames = CACHE_PROJECT, key = "#projectId")
     public ProjectResponseDTO getProject(String projectId) {
         ObjectId objectId = new ObjectId(projectId);
         Project project = projectRepository.findById(objectId)
@@ -110,6 +121,8 @@ public class ProjectService {
         return enrichProjectResponse(project);
     }
 
+
+    @CacheEvict(cacheNames = CACHE_PROJECT, key = "#projectId")
     public boolean deleteProject(String projectId) {
         ObjectId objectId = new ObjectId(projectId);
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
@@ -155,6 +168,7 @@ public class ProjectService {
 
 
 
+    @CacheEvict(cacheNames = CACHE_PROJECT, allEntries = true)
     public boolean subscribeToProject(String projectId,String userId){
         ObjectId objectProjectId = new ObjectId(projectId);
         ObjectId objectUserId = new ObjectId(userId);
@@ -180,6 +194,7 @@ public class ProjectService {
     }
 
 
+    @CacheEvict(cacheNames = CACHE_PROJECT, allEntries = true)
     public boolean unsubscribeToProject(String projectId,String userId){
         ObjectId objectProjectId = new ObjectId(projectId);
         ObjectId objectUserId = new ObjectId(userId);
@@ -223,6 +238,7 @@ public class ProjectService {
     // }
 
 
+    @Cacheable(cacheNames = CACHE_PROJECT, key = "'trendingProjects'")
     public List<ProjectResponseDTO> getTrendingProjects(){
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
         List<Project> projects = projectRepository.findAllByCurrentContributorIds(currentUserId);
@@ -233,6 +249,7 @@ public class ProjectService {
 
 
 
+    @Cacheable(cacheNames = CACHE_PROJECT, key = "'recommend#' + #username")
     public List<ProjectResponseDTO> recommendProjects(String username){
 
         Optional<User> userOpt = userRepository.findByUsername(username);
@@ -247,7 +264,7 @@ public class ProjectService {
         List<String> recommendPosts = neo4jService.getProjectBasedOnInterests(userId,user.getInterests());
         List<String> recommendPostFromConnections = neo4jService.recommendProjectBasedOnConnectionsAndTags(userId, user.getInterests());
 
-        // Combine and remove duplicates
+        
         recommendPosts.addAll(recommendPostFromConnections);
         List<String> uniqueUserIds = recommendPosts.stream().distinct().toList();
 
@@ -256,11 +273,11 @@ public class ProjectService {
                 .map(ObjectId::new)
                 .toList();
 
-        // Fetch users from repository
+    
         List<Project> projects = StreamSupport.stream(projectRepository.findAllById(objectIds).spliterator(), false)
                 .collect(Collectors.toList());
 
-        // Map to DTOs
+    
         return projects.stream()
                 .map(projectMapper::toResponseEntity)
                 .collect(Collectors.toList());
@@ -273,6 +290,7 @@ public class ProjectService {
     
 
 
+    @Cacheable(cacheNames = CACHE_PROJECT, key = "'allProjects#' + #username")
     public List<ProjectResponseDTO> getAllProjects(String username){
 
 

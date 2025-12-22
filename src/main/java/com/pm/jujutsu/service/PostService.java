@@ -15,7 +15,11 @@ import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.bson.types.ObjectId;
+import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,9 +57,9 @@ public class PostService {
     @Autowired
     public SupabaseStorageService supabaseStorageService;
 
+    public final static String CACHE_POSTS = "posts";
 
-
-
+    @CachePut(cacheNames = CACHE_POSTS, key = "#result.postId")
     public PostResponseDTO createPost(PostRequestDTO postRequestDTO, List<MultipartFile> images) throws IOException {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
         Post post = postMapper.toEntity(postRequestDTO);
@@ -82,6 +86,8 @@ public class PostService {
         return responseDTO;
     }
 
+
+    @CachePut(cacheNames = CACHE_POSTS, key = "#result.postId")
     public PostResponseDTO updatePost(PostRequestDTO postRequestDTO, String postId) {
         if (!ObjectId.isValid(postId)) {
             throw new BadRequestException("Invalid post ID format");
@@ -107,6 +113,8 @@ public class PostService {
         return responseDTO;
     }
 
+
+    @Cacheable(cacheNames = CACHE_POSTS, key = "#postId")
     public PostResponseDTO getPost(String postId) {
         if (!ObjectId.isValid(postId)) {
             throw new BadRequestException("Invalid post ID format");
@@ -121,7 +129,9 @@ public class PostService {
 
         return responseDTO;
     }
+    
 
+    @CacheEvict(cacheNames = CACHE_POSTS, key = "#postId")
     public boolean deletePost(String postId) {
         if (!ObjectId.isValid(postId)) {
             throw new BadRequestException("Invalid post ID format");
@@ -144,6 +154,7 @@ public class PostService {
 
 
     @Transactional
+    @CacheEvict(cacheNames = CACHE_POSTS, key = "#postId")
     public boolean increaseLike(String postId) {
         if (!ObjectId.isValid(postId)) {
             throw new BadRequestException("Invalid post ID format");
@@ -175,6 +186,7 @@ public class PostService {
 
 
     @Transactional
+    @CacheEvict(cacheNames = CACHE_POSTS, key = "#postId")
     public boolean decreaseLike(String postId) {
         if (!ObjectId.isValid(postId)) {
             throw new BadRequestException("Invalid post ID format");
@@ -205,6 +217,7 @@ public class PostService {
 
 
     @Transactional
+    @CacheEvict(cacheNames = CACHE_POSTS, key = "#postId")
     public boolean commentOnPost(String postId, String comment) {
         // if (!ObjectId.isValid(postId)) {
         //     throw new BadRequestException("Invalid post ID format");
@@ -244,6 +257,8 @@ public class PostService {
         return true;
     }
 
+
+    @CacheEvict(cacheNames = CACHE_POSTS, key = "#postId")
     public boolean shareAPost(String postId) {
         if (!ObjectId.isValid(postId)) {
             throw new BadRequestException("Invalid post ID format");
@@ -263,6 +278,7 @@ public class PostService {
     }
 
 
+    @Cacheable(cacheNames = CACHE_POSTS, key = "'trendingPosts'")
     public List<PostResponseDTO> getTrendingPost() {
         List<Post> posts = postRepository.findAllByOrderByLikesDesc();
         
@@ -276,6 +292,7 @@ public class PostService {
     }
 
 
+    @Cacheable(cacheNames = CACHE_POSTS, key = "'recommendPosts#' + #root.target.jwtUtil.currentUser.username")
     public List<PostResponseDTO> getRecommendPosts() {
         ObjectId objectId = jwtUtil.getCurrentUser().getId();
         Optional<User> userOpt = userRepository.findById(objectId);
@@ -319,6 +336,7 @@ public class PostService {
 
 
 
+    @Cacheable(cacheNames = CACHE_POSTS, key = "'userPosts#' + #username")
     public List<PostResponseDTO> getPostsByUserId(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -352,6 +370,8 @@ public class PostService {
         return dto;
     }
 
+
+    @Cacheable(cacheNames = CACHE_POSTS, key = "'comment#' + #postId")
     public List<CommentResponseDTO> getCommentsOnPost(String postId) {
         if (!ObjectId.isValid(postId)) {
             throw new BadRequestException("Invalid post ID format");

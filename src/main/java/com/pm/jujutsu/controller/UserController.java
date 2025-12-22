@@ -57,8 +57,7 @@ public class UserController {
 
     @DeleteMapping("/{username}")
     public ResponseEntity<Void> deleteUser(@PathVariable String username) {
-        userService.deleteUser(username);
-        return ResponseEntity.ok().build();
+       return  userService.deleteUser(username) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
 
@@ -85,8 +84,6 @@ public class UserController {
     
 
 
-    // Removed - interests are now handled automatically in updateUser()
-    // Use PUT /users/update instead
 
 
     @PutMapping("/follow/{username}")

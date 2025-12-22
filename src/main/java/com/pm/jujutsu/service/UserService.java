@@ -16,7 +16,11 @@ import com.pm.jujutsu.utils.Encoder;
 import com.pm.jujutsu.utils.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.bson.types.ObjectId;
+import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -52,7 +56,10 @@ public class UserService {
     @Autowired
     private UserNodeRepository userNodeRepository;
 
-    public List<UserResponseDTO> getAllUser() {
+    private static final String CACHE_USER = "users";
+
+    @Cacheable(cacheNames = CACHE_USER , key= "'allUsers'")
+    public List<UserResponseDTO> getAllUsers() {
         List<User> users = userRepository.findAll();
 
         return users.stream()
@@ -60,6 +67,8 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+
+    @CachePut(cacheNames = CACHE_USER, key = "#user.username")
     public UserResponseDTO createUser(UserRequestDTO user) {
 
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
@@ -87,7 +96,7 @@ public class UserService {
 
 
 
-
+    @CachePut(cacheNames = CACHE_USER, key = "#user.username") 
     public UserResponseDTO updateUser(UserUpdateDTO user) {
         User updatedUser = userRepository.getUserByEmail(user.getEmail()).orElseThrow(
                 () -> new NotFoundException("User doesnt exist")
@@ -123,6 +132,8 @@ public class UserService {
         return userMappers.toResponseEntity(savedUser);
     }
 
+
+    @CachePut(cacheNames = CACHE_USER, key = "#result.username")
     public UserResponseDTO updateProfilePicture(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
             throw new BadRequestException("File cannot be empty");
@@ -145,32 +156,37 @@ public class UserService {
         return userMappers.toResponseEntity(updatedUser);
     }
 
+
+
     private void deleteOldProfilePicture(String profilePicUrl) {
         if (profilePicUrl != null && profilePicUrl.contains(supabaseStorageService.getBucketUrl())) {
-            try {
-                // Extract filename from the URL
+            try {            
                 String fileName = profilePicUrl.substring(profilePicUrl.lastIndexOf("/") + 1);
                 supabaseStorageService.deleteFile(fileName);
             } catch (Exception e) {
-                // Log error but don't halt execution
                 System.err.println("Failed to delete old profile picture: " + e.getMessage());
             }
         }
     }
 
-    public UserResponseDTO getUser(String id) {
 
-        return userRepository.findById(new ObjectId(id))
+    @Cacheable(cacheNames = CACHE_USER, key = "#username")
+    public UserResponseDTO getUser(String username) {
+
+        return userRepository.findByUsername(username)
                 .map(userMappers::toResponseEntity)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
 
+    
 
-
-    public void deleteUser(String uuid) {
+    @CacheEvict(cacheNames = CACHE_USER, key = "#username")
+    public boolean deleteUser(String username) {
         ObjectId currentUserId = jwtUtils.getCurrentUser().getId();
-        ObjectId targetUserId = new ObjectId(uuid);
+        ObjectId targetUserId = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found"))
+                .getId();
 
 
         if (!targetUserId.equals(currentUserId)) {
@@ -185,15 +201,15 @@ public class UserService {
         userNodeRepository.deleteById(targetUserId.toHexString());
         deleteOldProfilePicture(userToDelete.getProfilePicUrl());
         userRepository.delete(userToDelete);
-
+        return true;
     }
 
 
 
     @Transactional
+    @CacheEvict(cacheNames = CACHE_USER, allEntries = true)
     public boolean addFollower(String targetUsername, String currentUserEmailOrUsername) {
         Optional<User> targetUser = userRepository.findByUsername(targetUsername);
-        // Current user identifier could be email (from UserDetails) or username
         Optional<User> currentUser = userRepository.findByEmail(currentUserEmailOrUsername);
         if (currentUser.isEmpty()) {
             currentUser = userRepository.findByUsername(currentUserEmailOrUsername);
@@ -218,6 +234,7 @@ public class UserService {
 
 
     @Transactional
+    @CacheEvict(cacheNames = CACHE_USER, allEntries = true)
     public boolean removeFollower(String targetUsername, String currentUserEmailOrUsername) {
         Optional<User> targetUser = userRepository.findByUsername(targetUsername);
         // Current user identifier could be email (from UserDetails) or username
@@ -244,6 +261,7 @@ public class UserService {
     }
 
 
+    @Cacheable(cacheNames = CACHE_USER, key = "'connections#' + #username")
     public List<UserResponseDTO> getRecommendConnections(String username){
         Optional<User> userOpt = userRepository.findByUsername(username);
 
@@ -290,7 +308,7 @@ public class UserService {
     }
 
 
-
+    @Cacheable(cacheNames = CACHE_USER, key = "'followers#' + #userIdOrUsername")
     public List<UserResponseDTO> getFollowers(String userIdOrUsername){
         User user = findUserByIdOrUsername(userIdOrUsername);
         
@@ -303,6 +321,8 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+
+    @Cacheable(cacheNames = CACHE_USER, key = "'followings#' + #userIdOrUsername")
     public List<UserResponseDTO> getFollowings(String userIdOrUsername){
         User user = findUserByIdOrUsername(userIdOrUsername);
         
@@ -315,17 +335,14 @@ public class UserService {
                 .toList();
     }
 
-    /**
-     * Helper method to find user by either ObjectId or username
-     */
     private User findUserByIdOrUsername(String userIdOrUsername) {
         try {
-            // Try parsing as ObjectId first
+            
             ObjectId objectId = new ObjectId(userIdOrUsername);
             return userRepository.findById(objectId)
                     .orElseThrow(() -> new NotFoundException("User not found"));
         } catch (IllegalArgumentException e) {
-            // If not a valid ObjectId, treat as username
+            
             return userRepository.findByUsername(userIdOrUsername)
                     .orElseThrow(() -> new NotFoundException("User not found"));
         }

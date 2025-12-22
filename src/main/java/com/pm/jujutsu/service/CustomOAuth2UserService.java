@@ -25,8 +25,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
-        
-        // Process OAuth2 user and save/update in database
+
         String email = oauth2User.getAttribute("email");
         String fullName = oauth2User.getAttribute("name");
         String provider = userRequest.getClientRegistration().getRegistrationId();
@@ -35,36 +34,33 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             Optional<User> existingUser = userRepository.findByEmail(email);
             
             if (existingUser.isEmpty()) {
-                // Extract base username from email (part before @)
+            
                 String baseUsername = email.split("@")[0];
                 
-                // Generate random 3-digit number
+            
                 Random random = new Random();
                 int randomNum = 100 + random.nextInt(900); // Generates 100-999
                 
-                // Combine to create unique username
+                
                 String username = baseUsername + randomNum;
                 
-                // Ensure uniqueness (very unlikely to collide, but safety check)
+                
                 while (userRepository.findByUsername(username).isPresent()) {
                     randomNum = 100 + random.nextInt(900);
                     username = baseUsername + randomNum;
                 }
                 
-                // Create new user
+                
                 User newUser = new User();
                 newUser.setEmail(email);
-                newUser.setUsername(username); // e.g., john.doe847
-                newUser.setName(fullName != null ? fullName : baseUsername); // Use OAuth name or email prefix
-                newUser.setProvider(provider); // "google" or "github"
+                newUser.setUsername(username); 
+                newUser.setName(fullName != null ? fullName : baseUsername); 
+                newUser.setProvider(provider); 
                 
-                // OAuth users don't have password - they can ONLY login via OAuth
-                // hashedPassword will be null - this prevents email/password login
-                // If they want password login later, add a "Set Password" feature
-                
+             
                 User savedUser = userRepository.save(newUser);
                 
-                // Create corresponding Neo4j node for social graph
+                
                 neo4jService.createUserNode(savedUser.getId().toHexString());
                 
                 System.out.println("✅ OAuth user created:");

@@ -22,8 +22,6 @@ public class JwtUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         com.pm.jujutsu.model.User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-
-        // OAuth users have null password - use empty string for Spring Security compatibility
         String password = user.getHashedPassword() != null ? user.getHashedPassword() : "";
         
         return new User(user.getEmail(), password, new ArrayList<>());

@@ -54,7 +54,7 @@ public class ProjectService {
     private static final String CACHE_PROJECT = "projects";
     
 
-    @CachePut(cacheNames = CACHE_PROJECT, key = "#result.projectId")
+    @CachePut(cacheNames = CACHE_PROJECT, key = "#result.id")
     public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO, List<MultipartFile> images) throws IOException {
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();
 
@@ -90,7 +90,7 @@ public class ProjectService {
     }
 
 
-    @CachePut(cacheNames = CACHE_PROJECT, key = "#result.projectId")
+    @CachePut(cacheNames = CACHE_PROJECT, key = "#result.id")
     public ProjectResponseDTO updateProject(String projectId, ProjectRequestDTO projectRequestDTO) {
         ObjectId objectId = new ObjectId(projectId);
         ObjectId currentUserId = jwtUtil.getCurrentUser().getId();

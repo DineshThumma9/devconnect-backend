@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 @Service
 public class PostService {
 
+ 
     @Autowired
     public PostRepository postRepository;
 
@@ -57,7 +58,13 @@ public class PostService {
     @Autowired
     public SupabaseStorageService supabaseStorageService;
 
+
+    @Autowired
+    public NotificationService notificationService;
+
     public final static String CACHE_POSTS = "posts";
+
+    
 
     @CachePut(cacheNames = CACHE_POSTS, key = "#result.postId")
     public PostResponseDTO createPost(PostRequestDTO postRequestDTO, List<MultipartFile> images) throws IOException {
@@ -174,6 +181,7 @@ public class PostService {
             // Add user to likedBy set
             post1.getLikedBy().add(userId);
             post1.setLikes(post1.getLikes() + 1);
+            notificationService.onPostLiked(post1.getOwnerId().toHexString(), postId);
             neo4jService.createLikeRelationship(postId, String.valueOf(userId));
             postRepository.save(post1);
             return true;
@@ -251,7 +259,7 @@ public class PostService {
             postObjectId.toHexString()
         );
 
-        // Increment comment count on post
+        notificationService.onCommentAdded(postId, savedComment.getId().toHexString());
         post1.setCommentsCount(post1.getCommentsCount() + 1);
         postRepository.save(post1);
         return true;

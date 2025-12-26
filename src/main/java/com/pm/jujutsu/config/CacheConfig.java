@@ -33,26 +33,24 @@ public class CacheConfig {
             redisTemplate.setConnectionFactory(connectionFactory);
             redisTemplate.setKeySerializer(new StringRedisSerializer());
             redisTemplate.afterPropertiesSet();
-            
-            // Clear all Redis data
             redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
-            System.out.println("✅ Redis cache cleared successfully on startup");
         } catch (Exception e) {
-            System.err.println("⚠️ Failed to clear Redis cache: " + e.getMessage());
+        
             e.printStackTrace();
         }
     }
     
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // Create ObjectMapper for JSON serialization (without type info)
+    
+
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.findAndRegisterModules();
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         
-        // Use Jackson2JsonRedisSerializer for Object type
+    
         Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
         
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()

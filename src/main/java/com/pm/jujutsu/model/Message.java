@@ -7,16 +7,23 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Message {
 
-   private String id;
+
+   @Id
+   private ObjectId id;
+
    private String conversationId;
    private String content;
-   private String senderId;
+   private String recipientUsername;
+   private String senderUsername;
    private LocalDateTime timestamp;
    // private boolean read;
    

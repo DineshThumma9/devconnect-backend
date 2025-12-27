@@ -15,11 +15,10 @@ public class Conversation {
     
     @Id
     private String id;
-    private String recipentId;
-    private String authorId;
-    // private boolean isRead;
+    private String recipentUsername;
+    private String authorUsername;
     private long timestamp;
     private String lastMessage;
-    private List<Message> messages = new ArrayList<>();
+
 
 }

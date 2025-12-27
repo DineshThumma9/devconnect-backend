@@ -43,12 +43,11 @@ public class ChatController {
         return ResponseEntity.ok(chatService.getConversationsForUser(username));
     }
 
-    /**
-     * Get conversation between two users (REST endpoint)
-     * Used to load message history when opening a chat
-     */
+
+
+
     @GetMapping("/{recipient}/{author}")
-    public ResponseEntity<Conversation> getConversationBetweenUsers(
+    public ResponseEntity<List<Message>> getConversationBetweenUsers(
             @PathVariable String recipient, 
             @PathVariable String author) {
         return ResponseEntity.ok(chatService.getConversationBetweenUsers(recipient, author));
@@ -85,18 +84,17 @@ public class ChatController {
             Message savedMessage = chatService.saveMessage(chatMessage);
             
         
-            chatMessage.setId(savedMessage.getId());
             chatMessage.setTimestamp(savedMessage.getTimestamp());
             
-            // Broadcast to recipient - they will see the new message instantly
+            
             messagingTemplate.convertAndSend(
-                "/topic/user/" + chatMessage.getRecipientId(), 
+                "/topic/user/" + chatMessage.getRecipientUsername(), 
                 chatMessage
             );
             
-            // Also send back to sender for confirmation (with message ID)
+           
             messagingTemplate.convertAndSend(
-                "/topic/user/" + chatMessage.getSenderId(), 
+                "/topic/user/" + chatMessage.getSenderUsername(), 
                 chatMessage
             );
             
@@ -105,7 +103,7 @@ public class ChatController {
         } catch (Exception e) {
             log.error("Error sending message: {}", e.getMessage(), e);
             
-            // Send error back to sender
+       
             ChatMessageDTO errorMessage = ChatMessageDTO.builder()
                 .content("Failed to send message: " + e.getMessage())
                 .senderUsername("SYSTEM")
@@ -140,18 +138,17 @@ public class ChatController {
      *     type: "STOP_TYPING"
      * }));
      */
-    @MessageMapping("/chat.typing")
-    public void handleTyping(@Payload ChatMessageDTO chatMessage) {
-        log.info("User {} typing status: {} to {}", 
-            chatMessage.getSenderUsername(), 
-            chatMessage.getRecipientUsername());
+    // @MessageMapping("/chat.typing")
+    // public void handleTyping(@Payload ChatMessageDTO chatMessage) {
+    //     log.info("User {} typing status: {} to {}", 
+    //         chatMessage.getSenderUsername(), 
+    //         chatMessage.getRecipientUsername());
         
-        // Only broadcast typing indicator to the recipient (not the sender)
-        messagingTemplate.convertAndSend(
-            "/topic/user/" + chatMessage.getRecipientUsername()), 
-            chatMessage
-        );
-    }
+    //     messagingTemplate.convertAndSend(
+    //         "/topic/user/" + chatMessage.getRecipientUsername(), 
+    //         chatMessage
+    //     );
+    // }
     
     /**
      * Mark messages as read
@@ -167,24 +164,24 @@ public class ChatController {
      *     senderId: otherUserId
      * }));
      */
-    @MessageMapping("/chat.markRead/{conversationId}")
-    public void markMessagesAsRead(
-            @DestinationVariable String conversationId,
-            @Payload ChatMessageDTO readReceipt) {
-        log.info("Marking messages as read in conversation: {}", conversationId);
+    // @MessageMapping("/chat.markRead/{conversationId}")
+    // public void markMessagesAsRead(
+    //         @DestinationVariable String conversationId,
+    //         @Payload ChatMessageDTO readReceipt) {
+    //     log.info("Marking messages as read in conversation: {}", conversationId);
         
-        try {
-            chatService.markConversationAsRead(conversationId, readReceipt.getRecipientUsername());
+    //     try {
+    //         chatService.markConversationAsRead(conversationId, readReceipt.getRecipientUsername());
             
-            // Notify sender that their messages were read (for blue checkmarks)
-            messagingTemplate.convertAndSend(
-                "/topic/user/" + readReceipt.getSenderUsername(),
-                ChatMessageDTO.builder()
-                    .conversationId(conversationId)
-                    .build()
-            );
-        } catch (Exception e) {
-            log.error("Error marking messages as read: {}", e.getMessage(), e);
-        }
-    }
+     
+    //         messagingTemplate.convertAndSend(
+    //             "/topic/user/" + readReceipt.getSenderUsername(),
+    //             ChatMessageDTO.builder()
+    //                 .conversationId(conversationId)
+    //                 .build()
+    //         );
+    //     } catch (Exception e) {
+    //         log.error("Error marking messages as read: {}", e.getMessage(), e);
+    //     }
+    // }
 }

@@ -13,7 +13,9 @@ import com.pm.jujutsu.model.Message;
 
 public interface MessageRespository extends MongoRepository<Message,ObjectId> {
 
-    Optional<List<Message>> findMessageWithConversationIdOrderedByTimestamp(String id);
+
+    Optional<List<Message>> findByConversationIdOrderByTimestamp(ObjectId hexString);
+
 
     
 }

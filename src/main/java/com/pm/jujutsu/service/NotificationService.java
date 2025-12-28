@@ -9,35 +9,43 @@ public class NotificationService {
     
 
 
+
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    public void onPostLiked(String userId, String postId){
-        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", "Your post " + postId + " was liked!");
-    }
-
-
-    public void onCommentAdded(String postId, String commentId){
-        messagingTemplate.convertAndSend("/topic/posts/" + postId + "/comments", "New comment " + commentId + " added to post " + postId);
-    }
-
-
-    public void onNewMessage(){
-        messagingTemplate.convertAndSendToUser("saalar", "/topic/test", "New message from " + "Hello");
-    }
     
-    public void onNewFollower(String followerId){
 
+    public void onLikingPost(String postId,String likerUsername,String postOwnerUsername){
+        String notificationMessage = likerUsername + " liked your post with ID: " + postId;
+        messagingTemplate.convertAndSend(
+           "/queue/user/notifications/" + postOwnerUsername ,
+            notificationMessage
+        );
     }
 
-    public void onMessageReceiveds(String senderId, String receiverId){
 
+    public void onCommentingPost(String postId, String commenterUsername, String postOwnerUsername, String commentText) {
+        String notificationMessage = commenterUsername + " commented on your post with ID: " + postId + ": " + commentText;
+        messagingTemplate.convertAndSend(
+           "/queue/user/notifications/" + postOwnerUsername ,
+            notificationMessage
+        );
     }
-  
-    public void sendNotification(String message) {
-        messagingTemplate.convertAndSend("/topic/notifications", "Hello Subscribers!");  
-}
 
-    public void onPosted(){
-
+    public void onNewFollower(String followedUsername, String followerUsername) {
+        String notificationMessage = followerUsername + " started following you.";
+        messagingTemplate.convertAndSend(
+           "/queue/user/notifications/" + followedUsername ,
+            notificationMessage
+        );
     }
+
+    public void onNewMessage(String recipientUsername, String senderUsername) {
+        String notificationMessage = "New message from " + senderUsername;
+        messagingTemplate.convertAndSend(
+           "/queue/user/notifications/" + recipientUsername ,
+            notificationMessage
+        );
+    }
+
 }

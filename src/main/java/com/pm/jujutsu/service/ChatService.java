@@ -67,7 +67,7 @@ public class ChatService {
         }
 
         Optional<List<Message>> convo = messageRespository
-            .findMessageWithConversationIdOrderedByTimeStampAsc(conversation.get().getId());
+            .findByConversationIdOrderByTimestamp(conversation.get().getId());
 
         return convo.orElse(List.of());
     }
@@ -97,7 +97,7 @@ public class ChatService {
         
         if (existingConvo.isPresent()) {
             conversation = existingConvo.get();
-            newMessage.setConversationId(conversation.getId());
+            newMessage.setConversationId(conversation.getId().toHexString());
             conversation.setLastMessage(chatMessageDTO.getContent());
             conversation.setTimestamp(System.currentTimeMillis());
             
@@ -110,7 +110,7 @@ public class ChatService {
             conversation.setTimestamp(System.currentTimeMillis());
             
             conversation = chatRepository.save(conversation);
-            newMessage.setConversationId(conversation.getId());
+            newMessage.setConversationId(conversation.getId().toHexString());
             
             log.info("Created new conversation: {}", conversation.getId());
         }

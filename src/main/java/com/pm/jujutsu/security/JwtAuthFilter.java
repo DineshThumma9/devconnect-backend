@@ -31,9 +31,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
-        // Skip JWT validation for auth endpoints
         String path = request.getRequestURI();
-        if (path.startsWith("/auth/") || path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs")) {
+        
+        // Skip JWT validation for public endpoints
+        if (path.startsWith("/auth/") || 
+            path.startsWith("/swagger-ui") || 
+            path.startsWith("/v3/api-docs") ||
+            path.startsWith("/wss/")) {  // WebSocket handled by HandshakeInterceptor
             filterChain.doFilter(request, response);
             return;
         }

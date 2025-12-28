@@ -181,7 +181,7 @@ public class PostService {
             // Add user to likedBy set
             post1.getLikedBy().add(userId);
             post1.setLikes(post1.getLikes() + 1);
-            notificationService.onPostLiked(post1.getOwnerId().toHexString(), postId);
+            notificationService.onLikingPost(postId, jwtUtil.getCurrentUsername(), post1.getOwnerId().toHexString());
             neo4jService.createLikeRelationship(postId, String.valueOf(userId));
             postRepository.save(post1);
             return true;
@@ -259,7 +259,7 @@ public class PostService {
             postObjectId.toHexString()
         );
 
-        notificationService.onCommentAdded(postId, savedComment.getId().toHexString());
+        notificationService.onCommentingPost(postId, jwtUtil.getCurrentUser().getUsername(), post1.getOwnerId().toHexString(), comment);
         post1.setCommentsCount(post1.getCommentsCount() + 1);
         postRepository.save(post1);
         return true;

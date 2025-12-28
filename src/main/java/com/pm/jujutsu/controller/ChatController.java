@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +40,7 @@ public class ChatController {
 
 
     @GetMapping("/{username}")
+
     public ResponseEntity<List<Conversation>> getConversationsForUser(@PathVariable String username) {
         return ResponseEntity.ok(chatService.getConversationsForUser(username));
     }
@@ -88,13 +90,13 @@ public class ChatController {
             
             
             messagingTemplate.convertAndSend(
-                "/topic/user/" + chatMessage.getRecipientUsername(), 
+                "/queue/user/" + chatMessage.getRecipientUsername(), 
                 chatMessage
             );
             
            
             messagingTemplate.convertAndSend(
-                "/topic/user/" + chatMessage.getSenderUsername(), 
+                "/queue/user/" + chatMessage.getSenderUsername(), 
                 chatMessage
             );
             
@@ -109,7 +111,7 @@ public class ChatController {
                 .senderUsername("SYSTEM")
                 .build();
             messagingTemplate.convertAndSend(
-                "/topic/user/" + chatMessage.getSenderUsername(), 
+                "/queue/user/" + chatMessage.getSenderUsername(), 
                 errorMessage
             );
         }

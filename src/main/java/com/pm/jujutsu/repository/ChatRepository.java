@@ -3,6 +3,7 @@ package com.pm.jujutsu.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +15,7 @@ import com.pm.jujutsu.model.Message;
  * Uses Spring Data MongoDB's query derivation from method names
  */
 @Repository
-public interface ChatRepository extends MongoRepository<Conversation, String> {
+public interface ChatRepository extends MongoRepository<Conversation, ObjectId> {
 
     /**
      * Find all conversations where user is either author or recipient
@@ -37,6 +38,8 @@ public interface ChatRepository extends MongoRepository<Conversation, String> {
 //   Optional<List<Message>> findMessageWithConversationId(Conversation list);
 
     List<Conversation> findByAuthorUsernameOrRecipentUsername(String username, String username2);
+
+    List<Conversation> findByAuthorUsernameOrRecipentUsername(String user);
 
     //Optional<List<Message>> findMessageWithConversationId(Conversation list);
 }

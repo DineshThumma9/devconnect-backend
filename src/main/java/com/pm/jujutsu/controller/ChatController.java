@@ -2,6 +2,7 @@ package com.pm.jujutsu.controller;
 
 import java.util.List;
 
+import org.hibernate.engine.jdbc.env.internal.LobCreationLogging_.logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -39,6 +40,9 @@ public class ChatController {
     private SimpMessagingTemplate messagingTemplate;
 
 
+
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ChatController.class);
+
     @GetMapping("/{username}")
 
     public ResponseEntity<List<Conversation>> getConversationsForUser(@PathVariable String username) {
@@ -52,7 +56,13 @@ public class ChatController {
     public ResponseEntity<List<Message>> getConversationBetweenUsers(
             @PathVariable String recipient, 
             @PathVariable String author) {
-        return ResponseEntity.ok(chatService.getConversationBetweenUsers(recipient, author));
+
+
+
+        List<Message> messages = chatService.getConversationBetweenUsers(recipient, author);
+        logger.info("Fetching conversation between {} and {}", recipient, author);
+       // logger.info("Gotten {} messages {}", messages.size() ,messages.subList(0, 5);
+        return ResponseEntity.ok(messages);
     }
 
     // ============= WEBSOCKET ENDPOINTS FOR REAL-TIME MESSAGING =============
@@ -82,13 +92,13 @@ public class ChatController {
         
         try {
         
-
-            Message savedMessage = chatService.saveMessage(chatMessage);
             
+            Message savedMessage = chatService.saveMessage(chatMessage);
+            logger.info("Message saved with ID: {} saved {}", savedMessage.getId(),chatMessage);
         
             chatMessage.setTimestamp(savedMessage.getTimestamp());
             
-            
+            logger.info("DTO {} saved message {}", chatMessage, savedMessage);            
             messagingTemplate.convertAndSend(
                 "/queue/user/" + chatMessage.getRecipientUsername(), 
                 chatMessage

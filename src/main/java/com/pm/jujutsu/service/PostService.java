@@ -9,11 +9,14 @@ import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.PostMapper;
 import com.pm.jujutsu.model.*;
 import com.pm.jujutsu.repository.CommentRepository;
+import com.pm.jujutsu.repository.NotificationRepository;
 import com.pm.jujutsu.repository.PostNodeRespository;
 import com.pm.jujutsu.repository.PostRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.JwtUtil;
 import jakarta.transaction.Transactional;
+
+import org.aspectj.weaver.ast.Not;
 import org.bson.types.ObjectId;
 import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +64,10 @@ public class PostService {
 
     @Autowired
     public NotificationService notificationService;
+
+
+    @Autowired 
+    private NotificationRepository notificationRepository;
 
     public final static String CACHE_POSTS = "posts";
 
@@ -169,8 +176,11 @@ public class PostService {
         
         ObjectId objectId = new ObjectId(postId);
         Optional<Post> post = postRepository.findById(objectId);
+        
         if (post.isPresent()) {
             Post post1 = post.get();
+            Optional<User> userOpt = userRepository.findById(post1.getOwnerId());
+
             ObjectId userId = jwtUtil.getCurrentUser().getId();
             
             // Check if user has already liked this post
@@ -181,7 +191,15 @@ public class PostService {
             // Add user to likedBy set
             post1.getLikedBy().add(userId);
             post1.setLikes(post1.getLikes() + 1);
-            notificationService.onLikingPost(postId, jwtUtil.getCurrentUsername(), post1.getOwnerId().toHexString());
+            Notification notification = Notification.builder()
+                .userId(userOpt.get().getId().toHexString())
+                .type(NotificationType.LIKE)
+                .message(jwtUtil.getCurrentUser().getUsername() + " liked your post.")
+                .isRead(false)
+                .timestamp(System.currentTimeMillis())
+                .build();
+            notificationRepository.save(notification);
+            notificationService.onLikingPost(postId, jwtUtil.getCurrentUsername(), userOpt.get().getUsername());
             neo4jService.createLikeRelationship(postId, String.valueOf(userId));
             postRepository.save(post1);
             return true;
@@ -248,6 +266,9 @@ public class PostService {
         comment1.setPostId(postObjectId);
         comment1.setUserId(userObjectId);
         comment1.setComment(comment);
+
+
+        Optional<User> userOpt = userRepository.findById(post1.getOwnerId());
         
         // Save the comment to database
         Comment savedComment = commentRepository.save(comment1);
@@ -259,7 +280,15 @@ public class PostService {
             postObjectId.toHexString()
         );
 
-        notificationService.onCommentingPost(postId, jwtUtil.getCurrentUser().getUsername(), post1.getOwnerId().toHexString(), comment);
+        Notification notification = Notification.builder()
+            .userId(userOpt.get().getId().toHexString())
+            .type(NotificationType.COMMENT)
+            .message(jwtUtil.getCurrentUser().getUsername() + " commented on your post.")
+            .isRead(false)
+            .timestamp(System.currentTimeMillis())
+            .build();
+        notificationRepository.save(notification);
+        notificationService.onCommentingPost(postId, jwtUtil.getCurrentUser().getUsername(), userOpt.get().getUsername(), comment);
         post1.setCommentsCount(post1.getCommentsCount() + 1);
         postRepository.save(post1);
         return true;

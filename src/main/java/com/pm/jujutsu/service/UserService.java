@@ -8,13 +8,17 @@ import com.pm.jujutsu.exceptions.ConflictException;
 import com.pm.jujutsu.exceptions.NotFoundException;
 import com.pm.jujutsu.exceptions.UnauthorizedException;
 import com.pm.jujutsu.mappers.UserMappers;
+import com.pm.jujutsu.model.Notification;
+import com.pm.jujutsu.model.NotificationType;
 import com.pm.jujutsu.model.User;
-
+import com.pm.jujutsu.repository.NotificationRepository;
 import com.pm.jujutsu.repository.UserNodeRepository;
 import com.pm.jujutsu.repository.UserRepository;
 import com.pm.jujutsu.utils.Encoder;
 import com.pm.jujutsu.utils.JwtUtil;
 import jakarta.transaction.Transactional;
+
+import org.aspectj.weaver.ast.Not;
 import org.bson.types.ObjectId;
 import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +60,18 @@ public class UserService {
     @Autowired
     private UserNodeRepository userNodeRepository;
 
+    @Autowired 
+    private NotificationRepository notificationRepository;
+
+
+    @Autowired
+    private NotificationService notificationService;
+
     private static final String CACHE_USER = "users";
+
+    UserService(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
 
     @Cacheable(cacheNames = CACHE_USER , key= "'allUsers'")
     public List<UserResponseDTO> getAllUsers() {
@@ -224,9 +239,19 @@ public class UserService {
         
         target.getFollowerIds().add(current.getId());
         current.getFollowingIds().add(target.getId());
-        
+    
+
         userRepository.save(target);
         userRepository.save(current);
+        Notification notification = Notification.builder()
+            .userId(target.getId().toHexString())
+            .type(NotificationType.FOLLOW)
+            .message(current.getUsername() + " started following you.")
+            .isRead(false)
+            .timestamp(System.currentTimeMillis())
+            .build();
+        notificationRepository.save(notification);
+        notificationService.onNewFollower(targetUsername, currentUserEmailOrUsername);
         
         neo4jService.followRelationship(current.getId().toHexString(), target.getId().toHexString());
         return true;

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,10 @@ public class ChatService {
     @Autowired
     public MessageRespository messageRespository;
 
+
+    private final static String CACHE_CHAT = "chatCache";
+
+    @Cacheable(value = CACHE_CHAT, key = "#username")
     public List<Conversation> getConversationsForUser(String username) {
         Optional<User> userOpt = userRepository.findByUsername(username);
         if (!userOpt.isPresent()) {
@@ -41,9 +46,13 @@ public class ChatService {
         User u = userOpt.get();
         String user = u.getUsername();
         
-        return chatRepository.findByAuthorUsernameOrRecipentUsername(username, user);
+        return chatRepository.findByAuthorUsernameOrRecipentUsername(user);
     }
 
+
+
+
+    @Cacheable(value = CACHE_CHAT, key = "#recipientUsername + '_' + #authorUsername")
     public List<Message> getConversationBetweenUsers(String recipientUsername, String authorUsername) {
         Optional<User> recipientOpt = userRepository.findByUsername(recipientUsername);
         Optional<User> authorOpt = userRepository.findByUsername(authorUsername);
@@ -60,14 +69,21 @@ public class ChatService {
                 author, recipient, author, recipient);
 
         if(!conversation.isPresent()) {
-            // CHANGE: Return empty list instead of throwing exception
-            // This allows new conversations to start
             log.info("No conversation found between {} and {}", author, recipient);
             return List.of();
         }
 
         Optional<List<Message>> convo = messageRespository
-            .findByConversationIdOrderByTimestamp(conversation.get().getId());
+            .findByConversationIdOrderByTimestamp(conversation.get().getId().toHexString());
+        
+        log.info("Found {} messages in conversation between {} and {}", 
+            convo.map(List::size).orElse(0), author, recipient);
+
+        log.info("Messages: {}", convo.orElse(List.of()).stream()
+            .limit(5)
+            .map(Message::toString)
+            .toList()
+        );
 
         return convo.orElse(List.of());
     }

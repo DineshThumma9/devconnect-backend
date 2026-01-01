@@ -20,12 +20,11 @@ import java.util.List;
 @RequestMapping("/projects")
 public class ProjectController {
 
-    private final ProjectService projectService;
 
     @Autowired
-    public ProjectController(ProjectService projectService) {
-        this.projectService = projectService;
-    }
+    private ProjectService projectService;
+
+    
 
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectResponseDTO> getProject(@PathVariable String projectId) {

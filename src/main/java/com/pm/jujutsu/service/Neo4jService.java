@@ -85,7 +85,7 @@ public class Neo4jService {
     }
 
     public List<String> getConnectionsBasedOnConnectionsAndInterests(String userId, Set<String> tags) {
-        return userNodeRepository.recommendConnectionsBasedOnUserInterests(userId, tags);
+        return userNodeRepository.recommendConnectionsBasedOnUserFollowsAndInterests(userId, tags);
 
     }
 

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.aspectj.weaver.ast.Not;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -92,8 +93,17 @@ public class NotificationService {
         return dtoList;
 
 
-        
+        }
 
+
+    public void markAsRead(String notificationId) {
+
+     Optional<Notification> notificationOpt = notificationRepository.findById(new ObjectId(notificationId));
+     if(!notificationOpt.isPresent()){
+        throw new RuntimeException("Notification not found with id: " + notificationId);
+     }
+        Notification notification = notificationOpt.get();
+        notification.setRead(true);
+        notificationRepository.save(notification);
     }
-
 }

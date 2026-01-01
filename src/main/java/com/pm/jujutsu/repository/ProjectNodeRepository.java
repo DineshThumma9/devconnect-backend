@@ -15,12 +15,12 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
 
 
 
-    @Query(" MATCH (u:User {id: $userId}), (p:Project {id: $projectId}) MERGE (u)-[:SUBSCRIBE]->(p)")
+    @Query("MATCH (u:User {id: $userId}) MATCH (p:Project {id: $projectId}) MERGE (u)-[:SUBSCRIBE]->(p)")
     void subscribeRelation(String userId, String projectId);
 
 
 
-    @Query("MATCH (u:User {id:$userId) - [l:SUBSCRIBED_TO] -> (p:Project {id:$projectId} DELETE l")
+    @Query("MATCH (u:User {id:$userId})-[l:SUBSCRIBE]->(p:Project {id:$projectId}) DELETE l")
     void unsubscribeRelation(String userId, String projectId);
 
 
@@ -41,8 +41,8 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
 
 
     @Query("""
-              MATCH (u:User {id: $userId})-[:INTERESTED_IN]->(t:Tag)<-[:WORKS_WITH]-(p:Project)
-                           WHERE t.name IN $tags
+              MATCH (u:User {id: $userId})-[:INTERESTED_IN]->(t:Tag)<-[:WORK_WITH]-(p:Project)
+                           WHERE t.name IN $tags AND NOT (u)-[:SUBSCRIBE]->(p)
                            RETURN DISTINCT p.id AS projectId
                            LIMIT 20
             """)
@@ -54,9 +54,9 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
     @Query("""
             
             
-            MATCH (:User {id: $userId})-[:FOLLOWS]->(f:User)-[:TAGGED_WITH]->(p:Project)<-[:WORKS_WITH]-(t:Tag)
-            WHERE t.name IN $tags
-            RETURN DISTINCT p.id AS postId
+            MATCH (u:User {id: $userId})-[:FOLLOWS]->(f:User)-[:SUBSCRIBE]->(p:Project)-[:WORK_WITH]->(t:Tag)
+            WHERE t.name IN $tags AND NOT (u)-[:SUBSCRIBE]->(p)
+            RETURN DISTINCT p.id AS projectId
             LIMIT 20
           
           """)

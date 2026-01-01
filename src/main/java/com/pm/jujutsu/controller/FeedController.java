@@ -66,10 +66,10 @@ public class FeedController {
     }
      
 
-        @GetMapping("/recommendations")
+        @GetMapping("/rec/{username}")
     public ResponseEntity<List<ProjectResponseDTO>> recommendProjects(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(projectService.recommendProjects(userDetails.getUsername()));
+            @PathVariable String username) {
+        return ResponseEntity.ok(projectService.recommendProjects(username));
     }
 
 

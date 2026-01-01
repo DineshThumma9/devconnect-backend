@@ -15,6 +15,34 @@ public class FakeDataGenerator {
 
     private final Faker faker = new Faker();
     private final Random random = new Random();
+    
+    // Realistic tech interests/skills
+    private static final List<String> TECH_INTERESTS = Arrays.asList(
+        "Java", "Python", "JavaScript", "TypeScript", "React", "Angular", "Vue",
+        "Node.js", "Spring Boot", "Django", "Flask", "Express.js",
+        "MongoDB", "PostgreSQL", "MySQL", "Redis", "Docker", "Kubernetes",
+        "AWS", "Azure", "GCP", "Git", "CI/CD", "DevOps",
+        "Machine Learning", "Data Science", "AI", "Deep Learning",
+        "Mobile Development", "Android", "iOS", "Flutter", "React Native",
+        "Game Development", "Unity", "Unreal Engine",
+        "Cybersecurity", "Blockchain", "Web3", "Microservices",
+        "GraphQL", "REST API", "gRPC", "WebSockets",
+        "HTML", "CSS", "Sass", "Tailwind CSS", "Bootstrap",
+        "C++", "C#", "Go", "Rust", "Ruby", "PHP", "Swift", "Kotlin"
+    );
+    
+    // Helper method to get random tech interests
+    private Set<String> getRandomTechInterests(int count) {
+        Set<String> interests = new HashSet<>();
+        List<String> shuffled = new ArrayList<>(TECH_INTERESTS);
+        Collections.shuffle(shuffled);
+        
+        for (int i = 0; i < Math.min(count, shuffled.size()); i++) {
+            interests.add(shuffled.get(i));
+        }
+        
+        return interests;
+    }
 
     // Generate fake User
     public User generateFakeUser() {
@@ -26,11 +54,8 @@ public class FakeDataGenerator {
         user.setHashedPassword(faker.internet().password());
         user.setProfilePicUrl(faker.internet().avatar());
         
-        // Generate random interests
-        Set<String> interests = IntStream.range(0, random.nextInt(5) + 1)
-                .mapToObj(i -> faker.programmingLanguage().name())
-                .collect(Collectors.toSet());
-        user.setInterests(interests);
+        // Generate random interests (3-7 tech interests)
+        user.setInterests(getRandomTechInterests(random.nextInt(5) + 3));
         
         return user;
     }
@@ -44,10 +69,7 @@ public class FakeDataGenerator {
         dto.setPassword(faker.internet().password(8, 16, true, true, true));
         dto.setProfilePicUrl(faker.internet().avatar());
         
-        Set<String> interests = IntStream.range(0, random.nextInt(5) + 1)
-                .mapToObj(i -> faker.programmingLanguage().name())
-                .collect(Collectors.toSet());
-        dto.setInterests(interests);
+        dto.setInterests(getRandomTechInterests(random.nextInt(5) + 3));
         
         return dto;
     }
@@ -62,11 +84,8 @@ public class FakeDataGenerator {
         post.setCreatedAt(faker.date().past(30, java.util.concurrent.TimeUnit.DAYS));
         post.setUpdatedAt(new Date());
         
-        // Generate random tags
-        Set<String> tags = IntStream.range(0, random.nextInt(5) + 1)
-                .mapToObj(i -> faker.programmingLanguage().name())
-                .collect(Collectors.toSet());
-        post.setTags(tags);
+        // Generate random tags (2-5 tech tags)
+        post.setTags(getRandomTechInterests(random.nextInt(4) + 2));
         
         // Generate random media URLs
         String[] media = IntStream.range(0, random.nextInt(3))
@@ -87,10 +106,7 @@ public class FakeDataGenerator {
         dto.setTitle(faker.lorem().sentence(5));
         dto.setContent(faker.lorem().paragraph(3));
         
-        Set<String> tags = IntStream.range(0, random.nextInt(5) + 1)
-                .mapToObj(i -> faker.programmingLanguage().name())
-                .collect(Collectors.toSet());
-        dto.setTags(tags);
+        dto.setTags(getRandomTechInterests(random.nextInt(4) + 2));
         
         String[] media = IntStream.range(0, random.nextInt(3))
                 .mapToObj(i -> faker.internet().image())
@@ -110,10 +126,8 @@ public class FakeDataGenerator {
         project.setPrivate(random.nextBoolean());
         project.setStatus(random.nextBoolean() ? "active" : "completed");
         
-        Set<String> techRequirements = IntStream.range(0, random.nextInt(6) + 2)
-                .mapToObj(i -> faker.programmingLanguage().name())
-                .collect(Collectors.toSet());
-        project.setTechRequirements(techRequirements);
+        // Generate tech requirements (3-8 technologies)
+        project.setTechRequirements(getRandomTechInterests(random.nextInt(6) + 3));
         
         // Generate random contributor IDs
         Set<ObjectId> contributors = IntStream.range(0, random.nextInt(5))
@@ -132,10 +146,7 @@ public class FakeDataGenerator {
         dto.setPrivate(random.nextBoolean());
 
         
-        Set<String> techRequirements = IntStream.range(0, random.nextInt(6) + 2)
-                .mapToObj(i -> faker.programmingLanguage().name())
-                .collect(Collectors.toSet());
-        dto.setTechRequirements(techRequirements);
+        dto.setTechRequirements(getRandomTechInterests(random.nextInt(6) + 3));
         
         return dto;
     }

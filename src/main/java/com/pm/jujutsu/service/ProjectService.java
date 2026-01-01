@@ -255,18 +255,32 @@ public class ProjectService {
         Optional<User> userOpt = userRepository.findByUsername(username);
 
         if(userOpt.isEmpty()){
+            System.out.println("❌ User not found for recommendations: " + username);
             return List.of();
         }
 
         User user = userOpt.get();
         String userId = user.getId().toHexString();
         
+        System.out.println("🔍 Getting project recommendations for user: " + username);
+        System.out.println("   User ID: " + userId);
+        System.out.println("   Interests: " + user.getInterests());
+        
+        if (user.getInterests() == null || user.getInterests().isEmpty()) {
+            System.out.println("⚠️ User has no interests - cannot recommend projects");
+            return List.of();
+        }
+        
         List<String> recommendPosts = neo4jService.getProjectBasedOnInterests(userId,user.getInterests());
         List<String> recommendPostFromConnections = neo4jService.recommendProjectBasedOnConnectionsAndTags(userId, user.getInterests());
 
+        System.out.println("📊 Projects based on interests: " + recommendPosts.size());
+        System.out.println("📊 Projects based on follows: " + recommendPostFromConnections.size());
         
         recommendPosts.addAll(recommendPostFromConnections);
         List<String> uniqueUserIds = recommendPosts.stream().distinct().toList();
+        
+        System.out.println("📊 Total unique project recommendations: " + uniqueUserIds.size());
 
 
         List<ObjectId> objectIds = uniqueUserIds.stream()

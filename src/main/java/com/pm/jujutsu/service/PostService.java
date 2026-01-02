@@ -23,6 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -447,6 +450,55 @@ public class PostService {
         }
         // Set if current user liked this post
         setIsLikedByCurrentUser(post, responseDTO);
+    }
+
+
+    public List<PostResponseDTO> searchPosts(String query, int page, int size) {
+        System.out.println("\n========== POST SEARCH STARTED ==========");
+        System.out.println("Search query: '" + query + "' (page: " + page + ", size: " + size + ")");
+        
+        // Create pageable with sorting by creation date (newest first)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        
+        List<Post> posts = postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
+                query, query, pageable);
+        System.out.println("Found " + posts.size() + " posts (page " + page + ")");
+        
+        if (!posts.isEmpty()) {
+            System.out.println("Post results:");
+            posts.forEach(post -> {
+                System.out.println("  - ID: " + post.getId() + ", Title: " + post.getTitle());
+                System.out.println("    Tags: " + post.getTags());
+            });
+        } else {
+            System.out.println("No posts found matching: '" + query + "'");
+        }
+        
+        List<PostResponseDTO> result = posts.stream()
+                .map(post -> {
+                    PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
+                    enrichPostResponse(post, responseDTO);
+                    return responseDTO;
+                })
+                .toList();
+        
+        System.out.println("Returning " + result.size() + " post DTOs");
+        System.out.println("========== POST SEARCH COMPLETED ==========\n");
+        
+        return result;
+    }
+
+    public List<PostResponseDTO> getPostsContainingTag(String tag) {
+        
+        List<Post> posts = postRepository.findAllByTagsContaining(tag);
+        
+        return posts.stream()
+                .map(post -> {
+                    PostResponseDTO responseDTO = postMapper.toResponseEntity(post);
+                    enrichPostResponse(post, responseDTO);
+                    return responseDTO;
+                })
+                .toList();
     }
 
 }

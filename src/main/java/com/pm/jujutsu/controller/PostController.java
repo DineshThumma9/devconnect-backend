@@ -141,6 +141,22 @@ public class PostController {
         return postService.getPostsByUserId(username);
     }
 
+
+
+
+    @GetMapping("/search")
+    public ResponseEntity<List<PostResponseDTO>> searchPosts(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (q == null || q.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        List<PostResponseDTO> results = postService.searchPosts(q.trim(), page, size);
+        return ResponseEntity.ok(results);
+    }
+
   
     
 

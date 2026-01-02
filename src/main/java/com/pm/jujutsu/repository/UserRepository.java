@@ -2,6 +2,7 @@ package com.pm.jujutsu.repository;
 
 import com.pm.jujutsu.model.User;
 import org.bson.types.ObjectId;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -25,4 +26,6 @@ public interface UserRepository extends MongoRepository<User, ObjectId> {
     Optional<User> findByUsername(String username);
 
     List<User> findAllByIdIn(List<ObjectId> ids);
+
+    List<User> findByNameContainingIgnoreCaseOrUsernameContainingIgnoreCase(String name, String username, Pageable pageable);
 }

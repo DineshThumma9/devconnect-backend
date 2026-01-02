@@ -24,7 +24,7 @@ public class ProjectResponseDTO {
     private Set<String> currentContributors = new HashSet<>();
     private String githubLink;
     private Date createdAt;
-    private String[] media;
+    private Set<String> media = new HashSet<>();
 
 
 

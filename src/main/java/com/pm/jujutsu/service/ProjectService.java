@@ -16,6 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.util.Streamable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -318,6 +323,54 @@ public class ProjectService {
             .filter(project -> project.getOwnerId().equals(userId))
             .map(projectMapper::toResponseEntity)
             .toList();
+    }
+
+     public List<ProjectResponseDTO> getUserInvolvedProjects(String username){
+
+         Optional<User> user = userRepository.findByUsername(username);
+         if(user.isEmpty()){
+            throw new UsernameNotFoundException("Username not found");
+         }
+
+         ObjectId objectId = user.get().getId();
+         List<Project> projects = projectRepository.findAllByCurrentContributorIdsContains(objectId);
+         return projects.stream()
+                 .map(projectMapper::toResponseEntity)
+                 .toList();
+
+
+     }
+
+
+    public List<ProjectResponseDTO> searchProjects(String query, int page, int size) {
+        System.out.println("\n========== PROJECT SEARCH STARTED ==========");
+        System.out.println("Search query: '" + query + "' (page: " + page + ", size: " + size + ")");
+        
+        // Create pageable with sorting
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "_id"));
+        
+        List<Project> projects = projectRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+                query, query, pageable);
+        System.out.println("Found " + projects.size() + " projects (page " + page + ")");
+        
+        if (!projects.isEmpty()) {
+            System.out.println("Project results:");
+            projects.forEach(project -> {
+                System.out.println("  - ID: " + project.getId() + ", Title: " + project.getTitle());
+                System.out.println("    Description: " + (project.getDescription().length() > 60 ? 
+                    project.getDescription().substring(0, 60) + "..." : project.getDescription()));
+                System.out.println("    Tech: " + project.getTechRequirements());
+            });
+        } else {
+            System.out.println("No projects found matching: '" + query + "'");
+        }
+        
+        List<ProjectResponseDTO> result = projects.stream()
+                .map(this::enrichProjectResponse)
+                .collect(Collectors.toList());
+        
+        System.out.println("========== PROJECT SEARCH COMPLETED ==========\n");
+        return result;
     }
 
 }

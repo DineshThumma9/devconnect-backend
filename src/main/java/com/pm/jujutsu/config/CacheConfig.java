@@ -50,6 +50,12 @@ public class CacheConfig {
         objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         
+        // Enable type information to prevent LinkedHashMap deserialization issues
+        objectMapper.activateDefaultTyping(
+            objectMapper.getPolymorphicTypeValidator(),
+            ObjectMapper.DefaultTyping.NON_FINAL,
+            com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY
+        );
     
         Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
         

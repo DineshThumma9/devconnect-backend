@@ -25,6 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -371,6 +374,36 @@ public class UserService {
             return userRepository.findByUsername(userIdOrUsername)
                     .orElseThrow(() -> new NotFoundException("User not found"));
         }
+    }
+
+    public List<UserResponseDTO> getUsersByName(String name, int page, int size) {
+        System.out.println("\n========== USER SEARCH STARTED ==========");
+        System.out.println("Search query: '" + name + "' (page: " + page + ", size: " + size + ")");
+        
+        // Create pageable with sorting by name
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        
+        // Search both name and username fields with the same query
+        List<User> users = userRepository.findByNameContainingIgnoreCaseOrUsernameContainingIgnoreCase(name, name, pageable);
+        System.out.println("Found " + users.size() + " users (page " + page + ")");
+        
+        if (!users.isEmpty()) {
+            System.out.println("User results:");
+            users.forEach(user -> {
+                System.out.println("  - ID: " + user.getId() + ", Name: " + user.getName() + ", Username: " + user.getUsername());
+            });
+        } else {
+            System.out.println("No users found matching: '" + name + "'");
+        }
+        
+        List<UserResponseDTO> result = users.stream()
+                .map(userMappers::toResponseEntity)
+                .toList();
+        
+        System.out.println("Returning " + result.size() + " user DTOs");
+        System.out.println("========== USER SEARCH COMPLETED ==========\n");
+        
+        return result;
     }
 
 

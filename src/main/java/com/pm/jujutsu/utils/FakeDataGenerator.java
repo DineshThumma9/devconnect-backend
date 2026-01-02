@@ -31,6 +31,160 @@ public class FakeDataGenerator {
         "C++", "C#", "Go", "Rust", "Ruby", "PHP", "Swift", "Kotlin"
     );
     
+    // Realistic post titles and content templates
+    private static final List<String> POST_TITLES = Arrays.asList(
+        "Just deployed my first microservices architecture!",
+        "Excited to share my new open source contribution",
+        "Looking for feedback on my React component library",
+        "Just solved a tricky algorithm problem",
+        "Sharing my experience migrating from monolith to microservices",
+        "Built a real-time chat app with WebSockets",
+        "My journey learning machine learning this year",
+        "Tips for optimizing database queries",
+        "How I improved API response time by 70%",
+        "Deployed my app to production for the first time!",
+        "Sharing my code review best practices",
+        "Just got my AWS certification!",
+        "Building a REST API with Spring Boot",
+        "My experience with Test-Driven Development",
+        "Containerizing applications with Docker",
+        "Learning TypeScript - some thoughts",
+        "Implementing OAuth2 authentication",
+        "My favorite VS Code extensions",
+        "Debugging production issues - lessons learned",
+        "Setting up a CI/CD pipeline from scratch"
+    );
+    
+    private static final List<String> POST_CONTENTS = Arrays.asList(
+        "After weeks of hard work, I finally got this working! The key was understanding how to properly handle asynchronous operations. Would love to hear your thoughts and feedback.",
+        "I've been working on this project for a few months now and learned so much. Here are some key takeaways I wanted to share with the community.",
+        "This was such a challenging problem to solve! Had to dig deep into the documentation and experiment with different approaches. Finally found a solution that works great.",
+        "Really excited about this new technology stack. The developer experience is amazing and the performance improvements are significant. Highly recommend checking it out!",
+        "Spent the whole weekend refactoring this code. It's much cleaner now and way easier to maintain. Sometimes taking a step back to improve code quality is worth it.",
+        "Just wrapped up this feature and wanted to document my approach. Hope this helps others facing similar challenges. Feel free to ask questions!",
+        "Had an interesting debugging session today. The issue was subtle but taught me a lot about how this system works under the hood. Sharing what I learned.",
+        "After trying several different approaches, this solution worked best for my use case. Here's why I chose this particular tech stack and architecture.",
+        "Making progress on my learning journey! These resources were incredibly helpful. Dropping some links for anyone interested in learning more.",
+        "This integration was trickier than expected but totally worth it. The end result is a much better user experience. Here's how I did it."
+    );
+    
+    // Realistic project titles and descriptions
+    private static final List<ProjectData> PROJECT_DATA = Arrays.asList(
+        new ProjectData(
+            "Task Management Platform",
+            "Building a full-stack task management app with real-time collaboration features. Looking for contributors interested in React, Node.js, and WebSocket implementation.",
+            Arrays.asList("React", "Node.js", "MongoDB", "WebSockets", "TypeScript")
+        ),
+        new ProjectData(
+            "AI Code Review Assistant",
+            "Developing an intelligent code review tool that uses machine learning to detect bugs and suggest improvements. Need help with ML models and VS Code extension development.",
+            Arrays.asList("Python", "Machine Learning", "TypeScript", "Node.js")
+        ),
+        new ProjectData(
+            "Social Media Analytics Dashboard",
+            "Creating a dashboard to visualize social media metrics and trends. Looking for frontend developers and data visualization experts.",
+            Arrays.asList("React", "D3.js", "Python", "PostgreSQL", "REST API")
+        ),
+        new ProjectData(
+            "E-Commerce Mobile App",
+            "Building a cross-platform mobile shopping app with payment integration. Need mobile developers and backend engineers.",
+            Arrays.asList("React Native", "Node.js", "MongoDB", "Stripe API", "Redux")
+        ),
+        new ProjectData(
+            "Real-Time Chat Application",
+            "Developing a secure messaging app with end-to-end encryption. Looking for contributors with security and real-time system experience.",
+            Arrays.asList("WebSockets", "Node.js", "React", "Encryption", "Redis")
+        ),
+        new ProjectData(
+            "Fitness Tracking API",
+            "Creating a comprehensive REST API for fitness and health data. Need backend developers familiar with Spring Boot and database optimization.",
+            Arrays.asList("Java", "Spring Boot", "PostgreSQL", "REST API", "Docker")
+        ),
+        new ProjectData(
+            "Open Source Blog Platform",
+            "Building a modern, lightweight blogging platform with Markdown support. Looking for full-stack developers and UI/UX contributors.",
+            Arrays.asList("Vue", "Express.js", "MongoDB", "Markdown", "Tailwind CSS")
+        ),
+        new ProjectData(
+            "Automated Testing Framework",
+            "Developing a framework for automated browser testing. Need contributors with testing experience and browser automation knowledge.",
+            Arrays.asList("Python", "Selenium", "Docker", "CI/CD", "pytest")
+        ),
+        new ProjectData(
+            "Weather Forecast App",
+            "Creating a beautiful weather app with location-based forecasts. Looking for mobile developers and API integration experts.",
+            Arrays.asList("Flutter", "REST API", "Firebase", "Google Maps API")
+        ),
+        new ProjectData(
+            "Developer Portfolio Generator",
+            "Building a tool to automatically generate portfolio websites from GitHub data. Need frontend and GitHub API experts.",
+            Arrays.asList("React", "Node.js", "GitHub API", "Next.js", "GraphQL")
+        ),
+        new ProjectData(
+            "Cloud Infrastructure Monitor",
+            "Developing a monitoring solution for cloud resources. Looking for DevOps engineers and cloud platform specialists.",
+            Arrays.asList("Python", "AWS", "Docker", "Kubernetes", "Prometheus")
+        ),
+        new ProjectData(
+            "Recipe Sharing Platform",
+            "Creating a social platform for sharing and discovering recipes. Need full-stack developers and database designers.",
+            Arrays.asList("React", "Spring Boot", "PostgreSQL", "AWS", "ElasticSearch")
+        ),
+        new ProjectData(
+            "Game Development Engine",
+            "Building a 2D game engine for indie developers. Looking for contributors with game dev and graphics programming experience.",
+            Arrays.asList("C++", "OpenGL", "Game Development", "Python")
+        ),
+        new ProjectData(
+            "Expense Tracker App",
+            "Developing a personal finance management app with budgeting features. Need mobile and backend developers.",
+            Arrays.asList("React Native", "Node.js", "MongoDB", "Chart.js", "JWT")
+        ),
+        new ProjectData(
+            "Video Streaming Platform",
+            "Creating a video hosting and streaming service. Looking for backend engineers and video processing experts.",
+            Arrays.asList("Node.js", "FFmpeg", "AWS", "React", "WebRTC")
+        ),
+        new ProjectData(
+            "Smart Home Controller",
+            "Building an IoT platform for controlling smart home devices. Need embedded systems and mobile app developers.",
+            Arrays.asList("Python", "React Native", "MQTT", "Raspberry Pi", "WebSockets")
+        ),
+        new ProjectData(
+            "Language Learning App",
+            "Developing an interactive language learning platform with gamification. Looking for mobile developers and UI/UX designers.",
+            Arrays.asList("Flutter", "Firebase", "REST API", "Game Development")
+        ),
+        new ProjectData(
+            "Code Snippet Manager",
+            "Creating a tool for organizing and searching code snippets with AI-powered tagging. Need full-stack and ML developers.",
+            Arrays.asList("React", "Python", "ElasticSearch", "Machine Learning", "MongoDB")
+        ),
+        new ProjectData(
+            "Music Streaming Service",
+            "Building a music streaming platform with playlist recommendations. Looking for backend engineers and ML specialists.",
+            Arrays.asList("React", "Node.js", "Machine Learning", "PostgreSQL", "Redis")
+        ),
+        new ProjectData(
+            "Job Board Platform",
+            "Developing a job posting and application platform for tech roles. Need full-stack developers and search optimization experts.",
+            Arrays.asList("Angular", "Spring Boot", "ElasticSearch", "PostgreSQL", "AWS")
+        )
+    );
+    
+    // Helper class for project data
+    private static class ProjectData {
+        String title;
+        String description;
+        List<String> techStack;
+        
+        ProjectData(String title, String description, List<String> techStack) {
+            this.title = title;
+            this.description = description;
+            this.techStack = techStack;
+        }
+    }
+    
     // Helper method to get random tech interests
     private Set<String> getRandomTechInterests(int count) {
         Set<String> interests = new HashSet<>();
@@ -79,15 +233,20 @@ public class FakeDataGenerator {
         Post post = new Post();
         post.setId(new ObjectId());
         post.setOwnerId(new ObjectId());
-        post.setTitle(faker.lorem().sentence(5));
-        post.setContent(faker.lorem().paragraph(3));
+        
+        // Use realistic title instead of lorem ipsum
+        post.setTitle(POST_TITLES.get(random.nextInt(POST_TITLES.size())));
+        
+        // Use realistic content instead of lorem ipsum
+        post.setContent(POST_CONTENTS.get(random.nextInt(POST_CONTENTS.size())));
+        
         post.setCreatedAt(faker.date().past(30, java.util.concurrent.TimeUnit.DAYS));
         post.setUpdatedAt(new Date());
         
         // Generate random tags (2-5 tech tags)
         post.setTags(getRandomTechInterests(random.nextInt(4) + 2));
         
-        // Generate random media URLs
+        // Generate random media URLs (some posts might not have media)
         String[] media = IntStream.range(0, random.nextInt(3))
                 .mapToObj(i -> faker.internet().image())
                 .toArray(String[]::new);
@@ -103,8 +262,12 @@ public class FakeDataGenerator {
     // Generate fake PostRequestDTO
     public PostRequestDTO generateFakePostRequestDTO() {
         PostRequestDTO dto = new PostRequestDTO();
-        dto.setTitle(faker.lorem().sentence(5));
-        dto.setContent(faker.lorem().paragraph(3));
+        
+        // Use realistic title instead of lorem ipsum
+        dto.setTitle(POST_TITLES.get(random.nextInt(POST_TITLES.size())));
+        
+        // Use realistic content instead of lorem ipsum
+        dto.setContent(POST_CONTENTS.get(random.nextInt(POST_CONTENTS.size())));
         
         dto.setTags(getRandomTechInterests(random.nextInt(4) + 2));
         
@@ -121,13 +284,22 @@ public class FakeDataGenerator {
         Project project = new Project();
         project.setId(new ObjectId());
         project.setOwnerId(new ObjectId());
-        project.setTitle(faker.app().name());
-        project.setDescription(faker.lorem().paragraph(2));
+        
+        // Use realistic project data
+        ProjectData projectData = PROJECT_DATA.get(random.nextInt(PROJECT_DATA.size()));
+        project.setTitle(projectData.title);
+        project.setDescription(projectData.description);
+        
         project.setPrivate(random.nextBoolean());
         project.setStatus(random.nextBoolean() ? "active" : "completed");
         
-        // Generate tech requirements (3-8 technologies)
-        project.setTechRequirements(getRandomTechInterests(random.nextInt(6) + 3));
+        // Use tech stack from project data, or generate random if preferred
+        Set<String> techStack = new HashSet<>(projectData.techStack);
+        // Optionally add a few more random technologies
+        if (random.nextBoolean()) {
+            techStack.addAll(getRandomTechInterests(random.nextInt(2) + 1));
+        }
+        project.setTechRequirements(techStack);
         
         // Generate random contributor IDs
         Set<ObjectId> contributors = IntStream.range(0, random.nextInt(5))
@@ -135,18 +307,43 @@ public class FakeDataGenerator {
                 .collect(Collectors.toSet());
         project.setCurrentContributorIds(contributors);
         
+        // Add realistic GitHub link sometimes
+        if (random.nextDouble() > 0.3) {
+            String repoName = projectData.title.toLowerCase()
+                    .replaceAll("[^a-z0-9\\s]", "")
+                    .replaceAll("\\s+", "-");
+            project.setGithubLink("https://github.com/" + faker.name().username() + "/" + repoName);
+        }
+        
         return project;
     }
 
     // Generate fake ProjectRequestDTO
     public ProjectRequestDTO generateFakeProjectRequestDTO() {
         ProjectRequestDTO dto = new ProjectRequestDTO();
-        dto.setTitle(faker.app().name());
-        dto.setDescription(faker.lorem().paragraph(2));
-        dto.setPrivate(random.nextBoolean());
-
         
-        dto.setTechRequirements(getRandomTechInterests(random.nextInt(6) + 3));
+        // Use realistic project data
+        ProjectData projectData = PROJECT_DATA.get(random.nextInt(PROJECT_DATA.size()));
+        dto.setTitle(projectData.title);
+        dto.setDescription(projectData.description);
+        
+        dto.setPrivate(random.nextBoolean());
+        
+        // Use tech stack from project data
+        Set<String> techStack = new HashSet<>(projectData.techStack);
+        // Optionally add a few more random technologies
+        if (random.nextBoolean()) {
+            techStack.addAll(getRandomTechInterests(random.nextInt(2) + 1));
+        }
+        dto.setTechRequirements(techStack);
+        
+        // Add realistic GitHub link sometimes
+        if (random.nextDouble() > 0.3) {
+            String repoName = projectData.title.toLowerCase()
+                    .replaceAll("[^a-z0-9\\s]", "")
+                    .replaceAll("\\s+", "-");
+            dto.setGithubLink("https://github.com/" + faker.name().username() + "/" + repoName);
+        }
         
         return dto;
     }

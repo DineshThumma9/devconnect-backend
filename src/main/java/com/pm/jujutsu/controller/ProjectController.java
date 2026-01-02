@@ -13,6 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 
@@ -86,6 +89,35 @@ public class ProjectController {
         return projectService.getAllProjects(username);
     }
 
+    @GetMapping("/subscribed/{username}")
+    public List<ProjectResponseDTO> getMethodName(@PathVariable String username) {
+        return projectService.getUserInvolvedProjects(username);
+    }
+
+    @GetMapping("/all/{username}")
+    public List<ProjectResponseDTO> getAllProjects(
+            @PathVariable String username
+    ) {
+        List<ProjectResponseDTO> projects =
+        projectService.getAllProjects(username);
+        projects.addAll(projectService.getUserInvolvedProjects(username));
+        return projects;
+        
+    }    
+
+   @GetMapping("/search")
+    public ResponseEntity<List<ProjectResponseDTO>> searchProjects(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (q == null || q.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        List<ProjectResponseDTO> results = projectService.searchProjects(q.trim(), page, size);
+        return ResponseEntity.ok(results);
+    }
+    
     // @GetMapping("/get-projects/{username}")
     // public List<ProjectResponseDTO>  getAllProjectsOfUser(@PathVariable String username) {
     //     return projectService.getAllProjects(username);

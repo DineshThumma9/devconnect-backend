@@ -106,6 +106,32 @@ public class UserController {
     }
 
 
+
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserResponseDTO>> searchUsers(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (q == null || q.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        List<UserResponseDTO> results = userService.getUsersByName(q.trim(), page, size);
+        return ResponseEntity.ok(results);
+    }
+    
+    // Debug endpoint to see all users
+    @GetMapping("/all")
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        List<UserResponseDTO> users = userService.getAllUsers();
+        System.out.println("Total users in DB: " + users.size());
+        users.forEach(user -> {
+            System.out.println("  - Name: " + user.getName() + ", Username: " + user.getUsername());
+        });
+        return ResponseEntity.ok(users);
+    }
+    
     // @GetMapping("/{username}/suggested-connections")
     // public ResponseEntity<List<UserResponseDTO>> suggestedConnection(
     //         @AuthenticationPrincipal UserDetails userDetails

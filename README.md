@@ -1,25 +1,15 @@
 # 🚀 DevConnect
 
-**DevConnect** is a social collaboration platform for developers where they can connect, share posts, build projects, and find collaborators easily.
-
----
+Real-time social collaboration platform for developers. Connect, share posts, build projects, discover collaborators, and get intelligent recommendations.
 
 ## ✅ Features
 
-- ✅ User registration & profile management  
-- ✅ Create, edit, and delete **Posts** and **Projects**  
-- ✅ Like, share, and comment on posts  
-- ✅ Tag-based project & post discovery  
-- ✅ Follow other developers  
-- ✅ Intelligent recommendations:
-    - Suggested projects  
-    - Suggested people to follow  
-    - Suggested posts based on tags & interactions  
-- ✅ Upload and store profile pictures and media files  
-- ✅ Hybrid database system:
-    - ✅ MongoDB for storing posts, users, projects, comments  
-    - ✅ Neo4j for social graph relationships and recommendations   
-    - ✅ Azure Blob Storage for storing media (profile pictures, project assets)
+- 🔐 **Auth**: Email + JWT, OAuth (Google/GitHub)
+- 📱 **Social**: Posts, projects, likes, comments, follow, tags, notifications
+- 🤖 **Recommendations**: Neo4j-powered social graph, personalized post/project/collaborator suggestions
+- 📡 **Real-Time**: WebSocket for live feed, chat, notifications
+- 🗂️ **Data**: MongoDB (primary), Redis (caching), Neo4j (graph), Supabase (media)
+- 📤 **Media**: Upload & store files via Supabase
 
 ---
 
@@ -27,117 +17,94 @@
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | React |
-| Backend | Spring Boot (Java) |
-| Database | MongoDB (Primary data storage) |
-| Graph Database | Neo4j (Social graph & recommendations) |
-| Object Storage | Azure Blob Storage (Profile pictures, media files) |
-| API Design | RESTful endpoints |
+| **Frontend** | React |
+| **Backend** | Spring Boot (Java) |
+| **Primary Database** | MongoDB (Posts, Users, Projects, Comments) |
+| **Cache Layer** | Redis (Home feed, frequently accessed data) |
+| **Graph Database** | Neo4j (Social graph & recommendation engine) |
+| **Object Storage** | Supabase Storage (Media files & assets) |
+| **Real-Time Communication** | WebSocket |
+| **Authentication** | JWT + OAuth 2.0 (Google, GitHub) |
+| **API Design** | RESTful + WebSocket endpoints |
+| **Notifications** | Event-driven notification service |
 
 ---
 
-## ✅ Architecture Overview
+## 🏗️ Architecture
 
-1. **MongoDB**  
-   - Stores persistent data:  
-     - `User`, `Post`, `Project`, `Comment` documents  
-     - Likes, Shares stored in post document fields
+**Authentication**: JWT tokens + OAuth 2.0 (Google, GitHub), email login
 
-2. **Neo4j**  
-   - Models relationships for recommendations:
-     - Users ↔ Users (Follow)
-     - Users ↔ Tags (Interests)
-     - Posts ↔ Tags (Discovery)
-     - Projects ↔ Tags (Discovery)
+**Dual API Layer**: 
+- HTTP/REST for CRUD operations
+- WebSocket for real-time updates, chat, notifications
 
-3. **Azure Blob Storage**  
-   - Stores user profile pictures and project assets securely in cloud storage  
-   - Efficient serving of media files
+**Multi-Database**:
+- **MongoDB**: User profiles, posts, projects, comments, notifications, chat history
+- **Redis**: Home feed cache (5-10 min), user profiles, recommendations cache (30 min)
+- **Neo4j**: Social graph (FOLLOWS, LIKED, COMMENTED_ON, INTERESTED_IN, TAGGED_WITH relationships); powers post/collaborator recommendations
+- **Supabase**: Media storage (profile pics, post images, project assets)
 
-4. **ElasticSearch (Future)**  
-   - Full-text search of projects, posts, and users.
+**Real-Time Events**: New posts, likes, comments, follows, messages broadcast via WebSocket
 
----
+## 📊 Key Flows
 
-## ✅ Example Use Case Flow
+| Flow | Details |
+|------|---------|
+| **Create Post** | HTTP POST → MongoDB → Neo4j sync → Redis invalidate → WebSocket broadcast → Notifications |
+| **View Home Feed** | Redis cache hit/miss → MongoDB + Neo4j query → Cache results → Live WebSocket updates |
+| **Recommendations** | Neo4j traversal (similar users, liked posts, interests) → Ranked results |
+| **Upload Media** | Supabase Storage → URL saved to MongoDB → Redis cache invalidate |
+| **Real-Time Chat** | WebSocket → MongoDB save → Broadcast to recipient → Notification |
 
-### ✅ User Creates a Post
-1. Post is saved in MongoDB.
-2. Post tags are synced to Neo4j:  
-   `PostNode` → `TAGGED_WITH` → `TagNode`
+## ✅ Setup
 
----
+**Prerequisites**: Java 11+, MongoDB, Redis, Neo4j, Supabase, OAuth credentials (Google/GitHub)
 
-### ✅ User Uploads Profile Picture
-1. Profile picture is uploaded from frontend.  
-2. Backend uploads file to **Azure Blob Storage**.  
-3. URL to the blob is saved in MongoDB under user document.
-
----
-
-### ✅ User Likes a Post
-1. Like count + userId updated in MongoDB Post document.
-2. `UserNode -[:LIKED]-> PostNode` relationship created in Neo4j.
+**Steps**:
+1. Copy config: `cp src/main/resources/application.yml.example src/main/resources/application.yml`
+2. Add credentials to `application.yml` (MongoDB, Redis, Neo4j, Supabase, OAuth)
+3. Install: `mvn clean install`
+4. Run: `mvn spring-boot:run`
+5. Access: `http://localhost:8080` | WebSocket: `ws://localhost:8080/ws` | Docs: `http://localhost:8080/swagger-ui.html`
 
 ---
 
-## ✅ Setup Instructions
+## 📚 API Endpoints
 
-1. Configure `application.properties`
+### **Authentication**
+- `POST /api/auth/register` - Register with email
+- `POST /api/auth/login` - Login with email/password
+- `POST /api/auth/oauth/google` - OAuth login (Google)
+- `POST /api/auth/oauth/github` - OAuth login (GitHub)
 
-```properties
-# Server port
-server.port=8000
+### **Posts**
+- `GET /api/posts` - Get all posts
+- `GET /api/feed` - Get personalized feed (with cache)
+- `POST /api/posts` - Create post
+- `PUT /api/posts/{id}` - Update post
+- `DELETE /api/posts/{id}` - Delete post
+- `POST /api/posts/{id}/like` - Like a post
+- `POST /api/posts/{id}/comment` - Comment on post
 
-# JWT Secret (env var fallback or hardcoded)
-JWT_SECRET_BASE64_KEY=
+### **Users**
+- `GET /api/users/{id}` - Get user profile
+- `PUT /api/users/{id}` - Update user profile
+- `POST /api/users/{id}/follow` - Follow user
+- `GET /api/users/recommendations` - Get suggested users
 
-# Azure Storage connection string
-azure.storage.connection-string=YOUR_ACTUAL_CONNECTION_STRING
+### **Projects**
+- `GET /api/projects` - Get all projects
+- `POST /api/projects` - Create project
+- `PUT /api/projects/{id}` - Update project
+- `DELETE /api/projects/{id}` - Delete project
 
-# Application name
-spring.application.name=jujutsu
+### **Notifications**
+- `GET /api/notifications` - Get user notifications
+- `PUT /api/notifications/{id}/read` - Mark as read
+- `DELETE /api/notifications/{id}` - Delete notification
 
-# OAuth2 Configuration
-spring.security.oauth2.client.registration.google.client-id=48755-dmheoup4s98e.apps.googleusercontent.com
-spring.security.oauth2.client.registration.google.client-secret=GOCDDPdnk
-spring.security.oauth2.client.registration.google.scope=profile,email
-spring.security.oauth2.client.registration.google.redirect-uri=http://localhost:8080/login/oauth2/code/google
-
-spring.security.oauth2.client.registration.github.client-id=O84Hq
-spring.security.oauth2.client.registration.github.client-secret=18da367461c4
-spring.security.oauth2.client.registration.github.scope=read:user,user:email
-spring.security.oauth2.client.registration.github.redirect-uri=http://localhost:8080/login/oauth2/code/github
-
-spring.security.oauth2.client.provider.github.authorization-uri=https://github.com/login/oauth/authorize
-spring.security.oauth2.client.provider.github.token-uri=https://github.com/login/oauth/access_token
-spring.security.oauth2.client.provider.github.user-info-uri=https://api.github.com/user
-
-# MongoDB Configuration
-spring.data.mongodb.uri=YOUR_ACTUAL_MONGO_URI
-spring.data.mongodb.auto-index-creation=true
-spring.data.mongodb.database=jujutsudb
-
-spring.data.neo4j.database=DB_NAME
-spring.neo4j.uri=neo4j_URI
-spring.neo4j.authentication.password=NEO4J_PASS
-spring.neo4j.authentication.username=NEO4j_USER
-
-```
+### **Chat (WebSocket)**
+- `WS /ws` - Connect to WebSocket
+- Events: `message`, `notification`, `post_update`, `user_update`
 
 
-## ✅ Setup Instructions
-
-2. Install dependencies:
-
-    ```bash
-    mvn clean install
-    ```
-
-3. Run backend:
-
-    ```bash
-    mvn spring-boot:run
-    ```
-
-4. Connect React frontend to the backend API.
